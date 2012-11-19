@@ -46,21 +46,11 @@ else
     exit
 fi
 
-#echo $INCOMMAND
-#echo $TARGETDIR
-#echo $GITPREPCOMMAND
-#echo $GITINCOMMAND
-#exit
-
 while true; do
     $INCOMMAND
     sleep 2
-#    echo "committing"
     DATE=`date "+%Y-%m-%d %H:%M:%S"`
-    #CMD="cd $TARGETDIR ; git add $GITADD ; git commit$GITINCOMMAND -m\"Scripted auto-commit on change (${DATE})\""
-    #`$CMD`
     cd $TARGETDIR
     git add $GITADD
     git commit$GITINCOMMAND -m"Scripted auto-commit on change (${DATE})"
 done
-#echo '$TARGETDIR'
