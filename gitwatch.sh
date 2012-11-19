@@ -30,27 +30,34 @@ if [ -z $1 ]; then
     exit
 fi
 
+#These two strings are used to construct the commit comment
+#  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
+#If you don't want to add text before and/or after the date/time, simply
+#  set them to empty strings
+CCPREPEND="Scripted auto-commit on change "
+CCAPPEND=" by gitwatch.sh"
+
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" `
-    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR"
-    GITADD="."
-    GITINCOMMAND=" -a"
+    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" ` #dir to CD into before using git commands: trim trailing slash, if any
+    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" #construct inotifywait-commandline
+    GITADD="." #add "." (CWD) recursively to index
+    GITINCOMMAND=" -a" #add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
-    TARGETDIR=$(dirname $IN)
-    INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN"
-    GITADD="$IN"
-    GITINCOMMAND=""
+    TARGETDIR=$(dirname $IN) #dir to CD into before using git commands: extract from file name
+    INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" #construct inotifywait-commandline
+    GITADD="$IN" #add only the selected file to index
+    GITINCOMMAND="" #no need to add anything more to "commit" call
 else
     exit
 fi
 
 while true; do
-    $INCOMMAND
-    sleep 2
-    DATE=`date "+%Y-%m-%d %H:%M:%S"`
-    cd $TARGETDIR
-    git add $GITADD
-    git commit$GITINCOMMAND -m"Scripted auto-commit on change (${DATE})"
+    $INCOMMAND #wait for changes
+    sleep 2 #wait 2 more seconds to give apps time to write out all changes
+    DATE=`date "+%Y-%m-%d %H:%M:%S"` #construct date-time string
+    cd $TARGETDIR #CD into right dir
+    git add $GITADD #add file(s) to index
+    git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 done
