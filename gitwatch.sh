@@ -30,6 +30,21 @@ if [ -z $1 ]; then
     exit
 fi
 
+# Check for both git and inotifywait and generate an error
+# if either don't exist or you cannot run them
+
+which git > /dev/null 2>/dev/null
+if [ $? -eq 1 ]; then
+    echo >&2 "Git not found and it is required to use this script."
+    exit 1;
+
+fi
+which inotifywait > /dev/null 2>/dev/null
+if [ $? -eq 1 ]; then
+    echo >&2 "inotifywait not found and it is required to use this script."
+    exit;
+fi
+
 #These two strings are used to construct the commit comment
 #  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
 #If you don't want to add text before and/or after the date/time, simply
