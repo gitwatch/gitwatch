@@ -33,13 +33,13 @@ fi
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
 
-hash git help > /dev/null 2>&1
+which git > /dev/null 2>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "Git not found and it is required to use this script."
     exit 1;
 
 fi
-hash inotifywait -h > /dev/null 2>&1
+which inotifywait > /dev/null 2>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "inotifywait not found and it is required to use this script."
     exit;
