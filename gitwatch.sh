@@ -28,7 +28,12 @@
 #   the inotify-tools (See https://github.com/rvoicilas/inotify-tools )
 #
 
+shelp () { 
+   echo "usage: $0 target [-p remote [-b branch]]" 
+}
+
 if [ -z $1 ]; then
+    shelp
     exit
 fi
 
