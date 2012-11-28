@@ -96,11 +96,11 @@ while true; do
     git add $GITADD #add file(s) to index
     git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 
-    if [ ! -n "$REMOTE" ]; then
-       if [ -n "$BRANCH" ]; then
-	   git push $REMOTE 
+    if [ ! -n "$REMOTE" ]; then #are we pushing to a remote?
+       if [ -n "$BRANCH" ]; then #Do we have a branch set to push to ?
+	   git push $REMOTE #Branch not set, push to remote without a branch
          else
-           git push $REMOTE $BRANCH
+           git push $REMOTE $BRANCH #Branch set, push to the remote with the given branch
        fi
     fi
 done
