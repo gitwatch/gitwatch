@@ -28,9 +28,27 @@
 #   the inotify-tools (See https://github.com/rvoicilas/inotify-tools )
 #
 
+REMOTE=""
+BRANCH="master"
+
+shelp () { 
+   echo "usage: $0 target [-p remote [-b branch]]" 
+}
+
 if [ -z $1 ]; then
+    shelp
     exit
 fi
+
+while getopts b:hp: option 
+do 
+    case "${option}"
+    in 
+      b) BRANCH=${OPTARG};;
+      h) shelp; exit;;
+      p) REMOTE=${OPTARG};;
+    esac
+done 
 
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
@@ -77,4 +95,12 @@ while true; do
     cd $TARGETDIR #CD into right dir
     git add $GITADD #add file(s) to index
     git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
+
+    if [ ! -n "$REMOTE" ]; then
+       if [ -n "$BRANCH" ]; then
+	   git push $REMOTE 
+         else
+           git push $REMOTE $BRANCH
+       fi
+    fi
 done
