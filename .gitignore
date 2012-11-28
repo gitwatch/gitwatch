@@ -1,0 +1,8 @@
+#Archives
+*.gz
+*.tar
+*.zip
+#Backup files
+.*.swp
+*.bk
+*.bak
