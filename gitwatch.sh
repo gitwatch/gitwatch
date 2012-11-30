@@ -25,14 +25,25 @@
 #       (but heavily modified by now)
 #
 #   Requires the command 'inotifywait' to be available, which is part of
-#   the inotify-tools (See https://github.com/rvoicilas/inotify-tools )
+#   the inotify-tools (See https://github.com/rvoicilas/inotify-tools ),
+#   and (obviously) git
 #
 
 REMOTE=""
 BRANCH="master"
 
-shelp () {
-   echo "usage: $0 target [-p remote [-b branch]]" 
+shelp () { # Print a message about how to use this script
+    echo "gitwatch - watch file or directory and git commit all changes as they happen"
+    echo ""
+    echo "Usage:"
+    echo "$(basename $0) [-p <remote> [-b <branch>]] <target>"
+    echo ""
+    echo "Where <target> is the file or folder which should be watched. The target needs"
+    echo "to be in a Git repository; or in the case of a folder, it may also be the top"
+    echo "folder of the repo."
+    echo "The optional <remote> and <branch> define the arguments used for 'git push',"
+    echo "which will be automatically done after each commit, if at least the -p option"
+    echo "is specified."
 }
 
 if [ -z $1 ]; then
