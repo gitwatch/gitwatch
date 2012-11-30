@@ -31,7 +31,7 @@
 REMOTE=""
 BRANCH="master"
 
-shelp () { 
+shelp () {
    echo "usage: $0 target [-p remote [-b branch]]" 
 }
 
@@ -43,15 +43,13 @@ fi
 while getopts b:hp: option 
 do 
     case "${option}" in 
-        b) 
-            BRANCH=${OPTARG};;
+        b) BRANCH=${OPTARG};;
         h) shelp; exit;;
-        p) 
-            REMOTE=${OPTARG};;
+        p) REMOTE=${OPTARG};;
     esac
 done
 
-shift $((OPTIND-1)) #Shift the input arguments, so that the input file (last arg) is $1 in the code below
+shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last arg) is $1 in the code below
 
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
@@ -68,9 +66,9 @@ if [ $? -eq 1 ]; then
     exit;
 fi
 
-#These two strings are used to construct the commit comment
+# These two strings are used to construct the commit comment
 #  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
-#If you don't want to add text before and/or after the date/time, simply
+# If you don't want to add text before and/or after the date/time, simply
 #  set them to empty strings
 CCPREPEND="Scripted auto-commit on change "
 CCAPPEND=" by gitwatch.sh"
@@ -78,32 +76,33 @@ CCAPPEND=" by gitwatch.sh"
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" ` #dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" #construct inotifywait-commandline
-    GITADD="." #add "." (CWD) recursively to index
-    GITINCOMMAND=" -a" #add -a switch to "commit" call just to be sure
+    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" ` # dir to CD into before using git commands: trim trailing slash, if any
+    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
+    GITADD="." # add "." (CWD) recursively to index
+    GITINCOMMAND=" -a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
-    TARGETDIR=$(dirname $IN) #dir to CD into before using git commands: extract from file name
-    INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" #construct inotifywait-commandline
-    GITADD="$IN" #add only the selected file to index
-    GITINCOMMAND="" #no need to add anything more to "commit" call
+    TARGETDIR=$(dirname $IN) # dir to CD into before using git commands: extract from file name
+    INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
+    GITADD="$IN" # add only the selected file to index
+    GITINCOMMAND="" # no need to add anything more to "commit" call
 else
     exit
 fi
 
 while true; do
-    $INCOMMAND #wait for changes
-    sleep 2 #wait 2 more seconds to give apps time to write out all changes
-    DATE=`date "+%Y-%m-%d %H:%M:%S"` #construct date-time string
-    cd $TARGETDIR #CD into right dir
-    git add $GITADD #add file(s) to index
+    $INCOMMAND # wait for changes
+    sleep 2 # wait 2 more seconds to give apps time to write out all changes
+    DATE=`date "+%Y-%m-%d %H:%M:%S"` # construct date-time string
+    cd $TARGETDIR # CD into right dir
+    git add $GITADD # add file(s) to index
     git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 
-    if [ -n "$REMOTE" ]; then #are we pushing to a remote?
-       if [ -z "$BRANCH" ]; then #Do we have a branch set to push to ?
-	   git push $REMOTE #Branch not set, push to remote without a branch
+    if [ -n "$REMOTE" ]; then # are we pushing to a remote?
+       if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
+	   git push $REMOTE # Branch not set, push to remote without a branch
          else
-           git push $REMOTE $BRANCH #Branch set, push to the remote with the given branch
+           git push $REMOTE $BRANCH # Branch set, push to the remote with the given branch
        fi
     fi
 done
+
