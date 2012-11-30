@@ -48,7 +48,7 @@ do
       h) shelp; exit;;
       p) REMOTE=${OPTARG};;
     esac
-done 
+done
 
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
@@ -96,8 +96,8 @@ while true; do
     git add $GITADD #add file(s) to index
     git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 
-    if [ ! -n "$REMOTE" ]; then #are we pushing to a remote?
-       if [ -n "$BRANCH" ]; then #Do we have a branch set to push to ?
+    if [ -n "$REMOTE" ]; then #are we pushing to a remote?
+       if [ -z "$BRANCH" ]; then #Do we have a branch set to push to ?
 	   git push $REMOTE #Branch not set, push to remote without a branch
          else
            git push $REMOTE $BRANCH #Branch set, push to the remote with the given branch
