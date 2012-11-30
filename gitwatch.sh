@@ -42,13 +42,16 @@ fi
 
 while getopts b:hp: option 
 do 
-    case "${option}"
-    in 
-      b) BRANCH=${OPTARG};;
-      h) shelp; exit;;
-      p) REMOTE=${OPTARG};;
+    case "${option}" in 
+        b) 
+            BRANCH=${OPTARG};;
+        h) shelp; exit;;
+        p) 
+            REMOTE=${OPTARG};;
     esac
 done
+
+shift $((OPTIND-1)) #Shift the input arguments, so that the input file (last arg) is $1 in the code below
 
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
