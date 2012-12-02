@@ -95,7 +95,8 @@ elif [ -f $1 ]; then
     GITADD="$IN" # add only the selected file to index
     GITINCOMMAND="" # no need to add anything more to "commit" call
 else
-    exit
+    echo >&2 "Error: The target is neither a regular file nor a directory."
+    exit 1
 fi
 
 while true; do
