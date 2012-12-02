@@ -36,7 +36,7 @@ shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
-    echo "$(basename $0) [-p <remote> [-b <branch>]] <target>"
+    echo "${0##*/} [-p <remote> [-b <branch>]] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository; or in the case of a folder, it may also be the top"
@@ -90,7 +90,7 @@ if [ -d $1 ]; then
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
-    TARGETDIR=$(dirname $IN) # dir to CD into before using git commands: extract from file name
+    TARGETDIR=${IN%/*} # dir to CD into before using git commands: extract from file name
     INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
     GITINCOMMAND="" # no need to add anything more to "commit" call
