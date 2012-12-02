@@ -85,7 +85,7 @@ CCAPPEND=" by gitwatch.sh"
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`sed -e "s/\/*$//" <<<"$IN"` # dir to CD into before using git commands: trim trailing slash, if any
+    TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
@@ -102,7 +102,7 @@ fi
 while true; do
     $INCOMMAND # wait for changes
     sleep 2 # wait 2 more seconds to give apps time to write out all changes
-    DATE=`date "+%Y-%m-%d %H:%M:%S"` # construct date-time string
+    DATE=$(date "+%Y-%m-%d %H:%M:%S") # construct date-time string
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
     git commit $GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
