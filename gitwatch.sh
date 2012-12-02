@@ -65,13 +65,13 @@ shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last ar
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
 
-which git > /dev/null 2>/dev/null
+which git &>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "Git not found and it is required to use this script."
     exit 1;
 
 fi
-which inotifywait > /dev/null 2>/dev/null
+which inotifywait &>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "inotifywait not found and it is required to use this script."
     exit;
