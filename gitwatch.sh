@@ -108,8 +108,8 @@ while true; do
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-	   git push $REMOTE # Branch not set, push to remote without a branch
-         else
+           git push $REMOTE # Branch not set, push to remote without a branch
+       else
            git push $REMOTE $BRANCH # Branch set, push to the remote with the given branch
        fi
     fi
