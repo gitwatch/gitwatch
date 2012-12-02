@@ -68,13 +68,13 @@ shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last ar
 which git &>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "Git not found and it is required to use this script."
-    exit 1;
+    exit 1
 
 fi
 which inotifywait &>/dev/null
 if [ $? -eq 1 ]; then
     echo >&2 "inotifywait not found and it is required to use this script."
-    exit;
+    exit
 fi
 
 # These two strings are used to construct the commit comment
@@ -87,7 +87,7 @@ CCAPPEND=" by gitwatch.sh"
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" ` # dir to CD into before using git commands: trim trailing slash, if any
+    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//"` # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND=" -a" # add -a switch to "commit" call just to be sure
