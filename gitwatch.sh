@@ -88,7 +88,7 @@ if [ -d $1 ]; then
     TARGETDIR=`echo "$IN" | sed -e "s/\/*$//"` # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
-    GITINCOMMAND=" -a" # add -a switch to "commit" call just to be sure
+    GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
     TARGETDIR=$(dirname $IN) # dir to CD into before using git commands: extract from file name
     INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
@@ -104,7 +104,7 @@ while true; do
     DATE=`date "+%Y-%m-%d %H:%M:%S"` # construct date-time string
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
-    git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
+    git commit $GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
