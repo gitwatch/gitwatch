@@ -46,11 +46,6 @@ shelp () { # Print a message about how to use this script
     echo "is specified."
 }
 
-if [ -z $1 ]; then
-    shelp
-    exit
-fi
-
 while getopts b:hp: option 
 do 
     case "${option}" in 
@@ -61,6 +56,11 @@ do
 done
 
 shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last arg) is $1 in the code below
+
+if [ $# -ne 1 ]; then
+    shelp
+    exit
+fi
 
 # Check for both git and inotifywait and generate an error
 # if either don't exist or you cannot run them
