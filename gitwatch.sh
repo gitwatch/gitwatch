@@ -85,7 +85,7 @@ CCAPPEND=" by gitwatch.sh"
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//"` # dir to CD into before using git commands: trim trailing slash, if any
+    TARGETDIR=`sed -e "s/\/*$//" <<<"$IN"` # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
