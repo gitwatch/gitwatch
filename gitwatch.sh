@@ -90,7 +90,7 @@ if [ -d $1 ]; then
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
-    TARGETDIR=${IN%/*} # dir to CD into before using git commands: extract from file name
+    TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
     GITINCOMMAND="" # no need to add anything more to "commit" call
