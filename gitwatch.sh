@@ -62,18 +62,17 @@ if [ $# -ne 1 ]; then
     exit
 fi
 
-# Check for both git and inotifywait and generate an error
-# if either don't exist or you cannot run them
 
-if ! which git &>/dev/null; then
-    echo >&2 "Git not found and it is required to use this script."
-    exit 1
+is_command () { # Tests for the availability of a command
+	which $1 &>/dev/null
+}
 
-fi
-if ! which inotifywait &>/dev/null; then
-    echo >&2 "inotifywait not found and it is required to use this script."
-    exit 1
-fi
+# Check dependencies and die if not met
+for cmd in git inotifywait; do
+	is_command $cmd || { echo "Error: Required command '$cmd' not found." >&2; exit 1; }
+done
+unset cmd
+
 
 # These two strings are used to construct the commit comment
 #  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
