@@ -5,6 +5,7 @@
 # Copyright (C) 2012  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
+#   - Dominik D. Geyer
 #
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
@@ -46,7 +47,7 @@ shelp () { # Print a message about how to use this script
     echo "is specified."
 }
 
-while getopts b:hp: option 
+while getopts b:hp: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
@@ -57,9 +58,9 @@ done
 
 shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last arg) is $1 in the code below
 
-if [ $# -ne 1 ]; then
-    shelp
-    exit
+if [ $# -ne 1 ]; then # If no command line arguments are left (that's bad: no target was passed)
+    shelp # print usage help
+    exit # and exit
 fi
 
 
@@ -75,9 +76,9 @@ unset cmd
 
 
 # These two strings are used to construct the commit comment
-#  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
+#   They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
 # If you don't want to add text before and/or after the date/time, simply
-#  set them to empty strings
+#   set them to empty strings
 CCPREPEND="Scripted auto-commit on change "
 CCAPPEND=" by gitwatch.sh"
 
