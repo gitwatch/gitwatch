@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
@@ -36,7 +36,7 @@ shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
-    echo "$(basename $0) [-p <remote> [-b <branch>]] <target>"
+    echo "${0##*/} [-p <remote> [-b <branch>]] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository; or in the case of a folder, it may also be the top"
@@ -45,11 +45,6 @@ shelp () { # Print a message about how to use this script
     echo "which will be automatically done after each commit, if at least the -p option"
     echo "is specified."
 }
-
-if [ -z $1 ]; then
-    shelp
-    exit
-fi
 
 while getopts b:hp: option 
 do 
@@ -62,20 +57,22 @@ done
 
 shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last arg) is $1 in the code below
 
-# Check for both git and inotifywait and generate an error
-# if either don't exist or you cannot run them
-
-which git > /dev/null 2>/dev/null
-if [ $? -eq 1 ]; then
-    echo >&2 "Git not found and it is required to use this script."
-    exit 1;
-
+if [ $# -ne 1 ]; then
+    shelp
+    exit
 fi
-which inotifywait > /dev/null 2>/dev/null
-if [ $? -eq 1 ]; then
-    echo >&2 "inotifywait not found and it is required to use this script."
-    exit;
-fi
+
+
+is_command () { # Tests for the availability of a command
+	which $1 &>/dev/null
+}
+
+# Check dependencies and die if not met
+for cmd in git inotifywait; do
+	is_command $cmd || { echo "Error: Required command '$cmd' not found." >&2; exit 1; }
+done
+unset cmd
+
 
 # These two strings are used to construct the commit comment
 #  They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
@@ -87,31 +84,32 @@ CCAPPEND=" by gitwatch.sh"
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
-    TARGETDIR=`echo "$IN" | sed -e "s/\/*$//" ` # dir to CD into before using git commands: trim trailing slash, if any
+    TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
-    GITINCOMMAND=" -a" # add -a switch to "commit" call just to be sure
+    GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
-    TARGETDIR=$(dirname $IN) # dir to CD into before using git commands: extract from file name
+    TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
     GITINCOMMAND="" # no need to add anything more to "commit" call
 else
-    exit
+    echo >&2 "Error: The target is neither a regular file nor a directory."
+    exit 1
 fi
 
 while true; do
     $INCOMMAND # wait for changes
     sleep 2 # wait 2 more seconds to give apps time to write out all changes
-    DATE=`date "+%Y-%m-%d %H:%M:%S"` # construct date-time string
+    DATE=$(date "+%Y-%m-%d %H:%M:%S") # construct date-time string
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
-    git commit$GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
+    git commit $GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-	   git push $REMOTE # Branch not set, push to remote without a branch
-         else
+           git push $REMOTE # Branch not set, push to remote without a branch
+       else
            git push $REMOTE $BRANCH # Branch set, push to the remote with the given branch
        fi
     fi
