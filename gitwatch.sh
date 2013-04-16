@@ -33,12 +33,13 @@
 REMOTE=""
 BRANCH="master"
 SLEEP_TIME=2
+DATE_FMT="+%Y-%m-%d %H:%M:%S"
 
 shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
-    echo "${0##*/} [-s <secs>] [-p <remote> [-b <branch>]] <target>"
+    echo "${0##*/} [-s <secs>] [-d <fmt>] [-p <remote> [-b <branch>]] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository; or in the case of a folder, it may also be the top"
@@ -50,12 +51,16 @@ shelp () { # Print a message about how to use this script
     echo " -s <secs>        after detecting a change to the watched file or directory,"
     echo "                  wait <secs> seconds until committing, to allow for more"
     echo "                  write actions of the same batch to finish; default is 2sec"
+    echo " -d <fmt>         the format string used for the timestamp in the commit"
+    echo "                  message; see 'man date' for details; default is "
+    echo "                  '+%Y-%m-%d %H:%M:%S'"
 }
 
-while getopts b:hp:s: option # Process command line options 
+while getopts b:d:hp:s: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
+        d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
         p) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
@@ -108,7 +113,7 @@ fi
 while true; do
     $INCOMMAND # wait for changes
     sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
-    DATE=$(date "+%Y-%m-%d %H:%M:%S") # construct date-time string
+    DATE=$(date "$DATE_FMT") # construct date-time string
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
     git commit $GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
