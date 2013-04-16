@@ -39,14 +39,11 @@ shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
-    echo "${0##*/} [-s <secs>] [-d <fmt>] [-p <remote> [-b <branch>]] <target>"
+    echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository; or in the case of a folder, it may also be the top"
     echo "folder of the repo."
-    echo "The optional <remote> and <branch> define the arguments used for 'git push',"
-    echo "which will be automatically done after each commit, if at least the -p option"
-    echo "is specified."
     echo ""
     echo " -s <secs>        after detecting a change to the watched file or directory,"
     echo "                  wait <secs> seconds until committing, to allow for more"
@@ -54,15 +51,22 @@ shelp () { # Print a message about how to use this script
     echo " -d <fmt>         the format string used for the timestamp in the commit"
     echo "                  message; see 'man date' for details; default is "
     echo "                  '+%Y-%m-%d %H:%M:%S'"
+    echo " -r <remote>      if defined, a 'git push' to the given <remote> is done after"
+    echo "                  every commit"
+    echo " -b <branch>      defines the branch which should be pushed automatically; if"
+    echo "                  not given, the branch argument to 'git push' is omitted and"
+    echo "                  a default push is done (see git man pages for details); if"
+    echo "                  given, push is run like 'git push <remote> <branch>; if no"
+    echo "                  remote was define with -r, this option has no effect"
 }
 
-while getopts b:d:hp:s: option # Process command line options 
+while getopts b:d:hp:r:s: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
-        p) REMOTE=${OPTARG};;
+        p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
     esac
 done
