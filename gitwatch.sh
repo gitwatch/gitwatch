@@ -2,7 +2,7 @@
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
-# Copyright (C) 2012  Patrick Lehner
+# Copyright (C) 2013  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
 #   - Dominik D. Geyer
@@ -34,6 +34,7 @@ REMOTE=""
 BRANCH="master"
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
+COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 
 shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
@@ -89,14 +90,6 @@ for cmd in git inotifywait; do
 done
 unset cmd
 
-
-# These two strings are used to construct the commit comment
-#   They're glued together like "<CCPREPEND>(<DATE&TIME>)<CCAPPEND>"
-# If you don't want to add text before and/or after the date/time, simply
-#   set them to empty strings
-CCPREPEND="Scripted auto-commit on change "
-CCAPPEND=" by gitwatch.sh"
-
 IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
@@ -117,10 +110,12 @@ fi
 while true; do
     $INCOMMAND # wait for changes
     sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
-    DATE=$(date "$DATE_FMT") # construct date-time string
+    if [ -n "$DATE_FMT" ]; then
+        DATE=$(date "$DATE_FMT") # construct date-time string
+    fi
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
-    git commit $GITINCOMMAND -m"${CCPREPEND}(${DATE})${CCAPPEND}" # construct commit message and commit
+    git commit $GITINCOMMAND -m"$(sed "s/%d/$DATE/" <<< "$COMMITMSG")" # construct commit message and commit
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
