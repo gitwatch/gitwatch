@@ -31,7 +31,7 @@
 #
 
 REMOTE=""
-BRANCH="master"
+BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
@@ -55,16 +55,29 @@ shelp () { # Print a message about how to use this script
     echo "                  \"+%Y-%m-%d %H:%M:%S\""
     echo " -r <remote>      if defined, a 'git push' to the given <remote> is done after"
     echo "                  every commit"
-    echo " -b <branch>      defines the branch which should be pushed automatically; if"
-    echo "                  not given, the branch argument to 'git push' is omitted and"
-    echo "                  a default push is done (see git man pages for details); if"
-    echo "                  given, push is run like 'git push <remote> <branch>; if no"
-    echo "                  remote was define with -r, this option has no effect"
+    echo " -b <branch>      the branch which should be pushed automatically;"
+    echo "                - if not given, the push command used is  'git push <remote>',"
+    echo "                    thus doing a default push (see git man pages for details)"
+    echo "                - if given and"
+    echo "                  + repo is in a detached HEAD state (at launch)"
+    echo "                    then the command used is  'git push <remote> <branch>'"
+    echo "                  + repo is NOT in a detached HEAD state (at launch)"
+    echo "                    then the command used is"
+    echo "                    'git push <remote> <current branch>:<branch>'  where"
+    echo "                    <current branch> is the target of HEAD (at launch)"
+    echo "                  if no remote was define with -r, this option has no effect"
     echo " -m <msg>         the commit message used for each commit; all occurences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo ""
+    echo "As indicated, several conditions are only checked once at launch of the"
+    echo "script. You can make changes to the repo state and configurations even while"
+    echo "the script is running, but that may lead to undefined and unpredictable (even"
+    echo "destructive) behavior!"
+    echo "It is therefore recommended to terminate the script before changin the repo's"
+    echo "config and restarting it afterwards."
 }
 
 while getopts b:d:hm:p:r:s: option # Process command line options 
@@ -85,7 +98,6 @@ if [ $# -ne 1 ]; then # If no command line arguments are left (that's bad: no ta
     shelp # print usage help
     exit # and exit
 fi
-
 
 is_command () { # Tests for the availability of a command
 	which $1 &>/dev/null
@@ -114,6 +126,16 @@ else
     exit 1
 fi
 
+cd $TARGETDIR # CD into right dir
+
+#check if we are on a detached HEAD
+HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
+if [ $? -eq 0 ]; then # HEAD is not detached
+    PUSH_BRANCH_EXPR="$(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+else # HEAD is detached
+    PUSH_BRANCH_EXPR="$BRANCH"
+fi
+
 while true; do
     $INCOMMAND # wait for changes
     sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
@@ -128,7 +150,7 @@ while true; do
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
            git push $REMOTE # Branch not set, push to remote without a branch
        else
-           git push $REMOTE $BRANCH # Branch set, push to the remote with the given branch
+           git push $REMOTE $PUSH_BRANCH_EXPR # Branch set, push to the remote with the given branch
        fi
     fi
 done
