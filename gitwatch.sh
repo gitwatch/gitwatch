@@ -40,10 +40,11 @@ shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
-    echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]] <target>"
+    echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
+    echo "          [-m <msg>] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
-    echo "to be in a Git repository; or in the case of a folder, it may also be the top"
+    echo "to be in a Git repository, or in the case of a folder, it may also be the top"
     echo "folder of the repo."
     echo ""
     echo " -s <secs>        after detecting a change to the watched file or directory,"
@@ -51,7 +52,7 @@ shelp () { # Print a message about how to use this script
     echo "                  write actions of the same batch to finish; default is 2sec"
     echo " -d <fmt>         the format string used for the timestamp in the commit"
     echo "                  message; see 'man date' for details; default is "
-    echo "                  '+%Y-%m-%d %H:%M:%S'"
+    echo "                  \"+%Y-%m-%d %H:%M:%S\""
     echo " -r <remote>      if defined, a 'git push' to the given <remote> is done after"
     echo "                  every commit"
     echo " -b <branch>      defines the branch which should be pushed automatically; if"
@@ -59,14 +60,20 @@ shelp () { # Print a message about how to use this script
     echo "                  a default push is done (see git man pages for details); if"
     echo "                  given, push is run like 'git push <remote> <branch>; if no"
     echo "                  remote was define with -r, this option has no effect"
+    echo " -m <msg>         the commit message used for each commit; all occurences of"
+    echo "                  %d in the string will be replaced by the formatted date/time"
+    echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
+    echo "                  is replaced by an empty string); the default message is:"
+    echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
 }
 
-while getopts b:d:hp:r:s: option # Process command line options 
+while getopts b:d:hm:p:r:s: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
+        m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
     esac
