@@ -119,12 +119,6 @@ for cmd in "$GIT" "$INW"; do
 done
 unset cmd
 
-# Check if commit message needs any formatting (date splicing)
-if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
-    DATE_FMT="" # empty date format (will disable splicing in the main loop)
-    FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
-fi
-
 # Expand the path to the target to absolute path
 IN=$(readlink -f "$1")
 
@@ -143,14 +137,28 @@ else
     exit 1
 fi
 
+# Check if commit message needs any formatting (date splicing)
+if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
+    DATE_FMT="" # empty date format (will disable splicing in the main loop)
+    FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
+fi
+
 cd $TARGETDIR # CD into right dir
 
-# check if we are on a detached HEAD
-HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
-if [ $? -eq 0 ]; then # HEAD is not detached
-    PUSH_BRANCH_EXPR="$(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
-else # HEAD is detached
-    PUSH_BRANCH_EXPR="$BRANCH"
+if [ -n "$REMOTE" ]; then # are we pushing to a remote?
+    if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
+        PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
+    else
+        # check if we are on a detached HEAD
+        HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
+        if [ $? -eq 0 ]; then # HEAD is not detached
+            PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+        else # HEAD is detached
+            PUSH_CMD="$GIT push $REMOTE $BRANCH"
+        fi
+    fi
+else
+    PUSH_CMD="" # if not remote is selected, make sure push command is empty
 fi
 
 # main program loop: wait for changes and commit them
@@ -164,12 +172,6 @@ while true; do
     $GIT add $GITADD # add file(s) to index
     $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-    if [ -n "$REMOTE" ]; then # are we pushing to a remote?
-       if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-           $GIT push $REMOTE # Branch not set, push to remote without a branch
-       else
-           $GIT push $REMOTE $PUSH_BRANCH_EXPR # Branch set, push to the remote with the given branch
-       fi
-    fi
+    if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
 done
 
