@@ -82,6 +82,10 @@ shelp () { # Print a message about how to use this script
     echo "config and restarting it afterwards."
 }
 
+stderr () {
+    echo $1 >&2
+}
+
 while getopts b:d:hm:p:r:s: option # Process command line options 
 do 
     case "${option}" in 
@@ -105,12 +109,13 @@ is_command () { # Tests for the availability of a command
 	which $1 &>/dev/null
 }
 
+# if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
 if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
 
-# Check dependencies and die if not met
+# Check availability of selected binaries and die if not met
 for cmd in "$GIT" "$INW"; do
-	is_command $cmd || { echo "Error: Required command '$cmd' not found." >&2; exit 1; }
+	is_command $cmd || { stderr "Error: Required command '$cmd' not found." ; exit 1; }
 done
 unset cmd
 
@@ -134,7 +139,7 @@ elif [ -f $1 ]; then # if the target is a single file
     GITADD="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
-    echo >&2 "Error: The target is neither a regular file nor a directory."
+    stderr "Error: The target is neither a regular file nor a directory."
     exit 1
 fi
 
