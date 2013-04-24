@@ -27,7 +27,9 @@
 #
 #   Requires the command 'inotifywait' to be available, which is part of
 #   the inotify-tools (See https://github.com/rvoicilas/inotify-tools ),
-#   and (obviously) git
+#   and (obviously) git.
+#   Will check the availability of both commands using the `which` command
+#   and will abort if either command (or `which`) is not found.
 #
 
 REMOTE=""
@@ -109,18 +111,25 @@ for cmd in git inotifywait; do
 done
 unset cmd
 
+# Check if commit message needs any formatting (date splicing)
+if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
+    DATE_FMT="" # empty date format (will disable splicing in the main loop)
+    FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
+fi
+
+# Expand the path to the target to absolute path
 IN=$(readlink -f "$1")
 
-if [ -d $1 ]; then
+if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
-    GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
-elif [ -f $1 ]; then
+    GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
+elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     INCOMMAND="inotifywait -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
-    GITINCOMMAND="" # no need to add anything more to "commit" call
+    GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
     echo >&2 "Error: The target is neither a regular file nor a directory."
     exit 1
@@ -128,7 +137,7 @@ fi
 
 cd $TARGETDIR # CD into right dir
 
-#check if we are on a detached HEAD
+# check if we are on a detached HEAD
 HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
 if [ $? -eq 0 ]; then # HEAD is not detached
     PUSH_BRANCH_EXPR="$(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
@@ -136,15 +145,16 @@ else # HEAD is detached
     PUSH_BRANCH_EXPR="$BRANCH"
 fi
 
+# main program loop: wait for changes and commit them
 while true; do
     $INCOMMAND # wait for changes
     sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
     if [ -n "$DATE_FMT" ]; then
-        DATE=$(date "$DATE_FMT") # construct date-time string
+        FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
     cd $TARGETDIR # CD into right dir
     git add $GITADD # add file(s) to index
-    git commit $GITINCOMMAND -m"$(sed "s/%d/$DATE/" <<< "$COMMITMSG")" # construct commit message and commit
+    git commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
