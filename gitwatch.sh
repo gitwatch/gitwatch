@@ -105,8 +105,11 @@ is_command () { # Tests for the availability of a command
 	which $1 &>/dev/null
 }
 
+if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
+if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
+
 # Check dependencies and die if not met
-for cmd in git inotifywait; do
+for cmd in "$GIT" "$INW"; do
 	is_command $cmd || { echo "Error: Required command '$cmd' not found." >&2; exit 1; }
 done
 unset cmd
@@ -122,12 +125,12 @@ IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
+    INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="inotifywait -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
+    INCOMMAND="$INW -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
@@ -153,14 +156,14 @@ while true; do
         FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
     cd $TARGETDIR # CD into right dir
-    git add $GITADD # add file(s) to index
-    git commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+    $GIT add $GITADD # add file(s) to index
+    $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
     if [ -n "$REMOTE" ]; then # are we pushing to a remote?
        if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-           git push $REMOTE # Branch not set, push to remote without a branch
+           $GIT push $REMOTE # Branch not set, push to remote without a branch
        else
-           git push $REMOTE $PUSH_BRANCH_EXPR # Branch set, push to the remote with the given branch
+           $GIT push $REMOTE $PUSH_BRANCH_EXPR # Branch set, push to the remote with the given branch
        fi
     fi
 done
