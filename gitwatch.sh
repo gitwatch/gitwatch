@@ -80,6 +80,13 @@ shelp () { # Print a message about how to use this script
     echo "destructive) behavior!"
     echo "It is therefore recommended to terminate the script before changin the repo's"
     echo "config and restarting it afterwards."
+    echo ""
+    echo "By default, gitwatch tries to use the binaries \"git\" and \"inotifywait\","
+    echo "expecting to find them in the PATH (it uses 'which' to check this and  will"
+    echo "abort with an error if they cannot be found). If you want to use binaries"
+    echo "that are named differently and/or located outside of your PATH, you can define"
+    echo "replacements in the environment variables GW_GIT_BIN and GW_INW_BIN for git"
+    echo "and inotifywait, respectively."
 }
 
 stderr () {
@@ -125,12 +132,12 @@ IN=$(readlink -f "$1")
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
-    GITADD="." # add "." (CWD) recursively to index
+    GIT_ADD_ARGS="." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     INCOMMAND="$INW -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
-    GITADD="$IN" # add only the selected file to index
+    GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
     stderr "Error: The target is neither a regular file nor a directory."
@@ -169,7 +176,7 @@ while true; do
         FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
     cd $TARGETDIR # CD into right dir
-    $GIT add $GITADD # add file(s) to index
+    $GIT add $GIT_ADD_ARGS # add file(s) to index
     $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
     if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
