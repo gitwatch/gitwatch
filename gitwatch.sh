@@ -30,6 +30,10 @@
 #   and (obviously) git
 #
 
+# Declare the inotifywait command as a variable, in case someone needs to
+# set it using an absolute path. Aids in running gitwatch on shared environments.
+INOTIFYWAITCMD=inotifywait
+
 REMOTE=""
 BRANCH="master"
 
@@ -69,7 +73,7 @@ is_command () { # Tests for the availability of a command
 }
 
 # Check dependencies and die if not met
-for cmd in git inotifywait; do
+for cmd in git $INOTIFYWAITCMD; do
 	is_command $cmd || { echo "Error: Required command '$cmd' not found." >&2; exit 1; }
 done
 unset cmd
@@ -86,12 +90,12 @@ IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="inotifywait --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
+    INCOMMAND="$INOTIFYWAITCMD --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,moved_to,delete $TARGETDIR" # construct inotifywait-commandline
     GITADD="." # add "." (CWD) recursively to index
     GITINCOMMAND="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="inotifywait -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
+    INCOMMAND="$INOTIFYWAITCMD -qq -e close_write,moved_to,delete $IN" # construct inotifywait-commandline
     GITADD="$IN" # add only the selected file to index
     GITINCOMMAND="" # no need to add anything more to "commit" call
 else
