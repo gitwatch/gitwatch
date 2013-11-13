@@ -38,7 +38,8 @@ SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 
-shelp () { # Print a message about how to use this script
+# Print a message about how to use this script
+shelp () {
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
@@ -89,15 +90,22 @@ shelp () { # Print a message about how to use this script
     echo "and inotifywait, respectively."
 }
 
+# print all arguments to stderr
 stderr () {
     echo $@ >&2
 }
 
+# clean up at end of program, killing the remaining sleep process if it still exists
 cleanup () {
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         kill $SLEEP_PID &>/dev/null
     fi
     exit 0
+}
+
+# Tests for the availability of a command
+is_command () {
+	which "$1" &>/dev/null
 }
 
 ###############################################################################
@@ -120,10 +128,6 @@ if [ $# -ne 1 ]; then # If no command line arguments are left (that's bad: no ta
     shelp # print usage help
     exit # and exit
 fi
-
-is_command () { # Tests for the availability of a command
-	which "$1" &>/dev/null
-}
 
 # if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
@@ -187,6 +191,10 @@ fi
 ###############################################################################
 
 # main program loop: wait for changes and commit them
+#   whenever inotifywait reports a change, we spawn a timer (sleep process) that gives the writing
+#   process some time (in case there are a lot of changes or w/e); if there is already a timer
+#   running when we receive an event, we kill it and start a new one; thus we only commit if there
+#   have been no changes reported during a whole timeout period
 while read -r line; do
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
@@ -207,7 +215,7 @@ while read -r line; do
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
         if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
-    ) & # and sent into background
+    ) & # and send into background
 
     SLEEP_PID=$! # and remember its PID
 done < <(eval $INCOMMAND)
