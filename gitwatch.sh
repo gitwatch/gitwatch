@@ -157,7 +157,7 @@ IN=$(readlink -f "$1")
 
 if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="\"$INW\" -qmr -e $EVENTS \"--exclude=^${TARGETDIR}/.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qmr -e $EVENTS --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
 elif [ -f "$1" ]; then # if the target is a single file
@@ -201,7 +201,7 @@ fi
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-while read -r line; do
+eval $INCOMMAND | while read -r line; do 
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         # kill it and wait for completion
@@ -217,12 +217,11 @@ while read -r line; do
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
         fi
         cd "$TARGETDIR" # CD into right dir
-        "$GIT" add "$GIT_ADD_ARGS" # add file(s) to index
+        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
         if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
     ) & # and send into background
 
     SLEEP_PID=$! # and remember its PID
-done < <(eval $INCOMMAND)
-
+done
