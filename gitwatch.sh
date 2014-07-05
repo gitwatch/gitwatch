@@ -158,12 +158,12 @@ IN=$(readlink -f "$1")
 
 if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="\"$INW\" -qmr -e $EVENTS --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
 elif [ -f "$1" ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="\"$INW\" -qm -e $EVENTS \"$IN\"" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
