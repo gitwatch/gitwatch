@@ -37,6 +37,7 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+EVENTS="close_write,move,delete,create"
 
 # Print a message about how to use this script
 shelp () {
@@ -74,6 +75,10 @@ shelp () {
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo " -e <events>      events passed to inotifywait to watch (defaults to "   
+    echo "                  $FILE_EVENTS)"                                              
+    echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
+    echo "                  dir events are file events plus 'create'"                   
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -110,7 +115,7 @@ is_command () {
 
 ###############################################################################
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
+while getopts b:d:hm:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
@@ -119,6 +124,7 @@ do
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
+        e) EVENTS=${OPTARG};;
     esac
 done
 
@@ -151,12 +157,12 @@ IN=$(readlink -f "$1")
 
 if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="\"$INW\" -qmr -e close_write,move,delete,create \"--exclude=^${TARGETDIR}/.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qmr -e $EVENTS --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
 elif [ -f "$1" ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="\"$INW\" -qm -e close_write,move,delete \"$IN\"" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qm -e $EVENTS \"$IN\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
@@ -195,7 +201,7 @@ fi
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-while read -r line; do
+eval $INCOMMAND | while read -r line; do 
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         # kill it and wait for completion
@@ -211,12 +217,11 @@ while read -r line; do
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
         fi
         cd "$TARGETDIR" # CD into right dir
-        "$GIT" add "$GIT_ADD_ARGS" # add file(s) to index
+        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
         if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
     ) & # and send into background
 
     SLEEP_PID=$! # and remember its PID
-done < <(eval $INCOMMAND)
-
+done
