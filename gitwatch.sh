@@ -2,10 +2,11 @@
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
-# Copyright (C) 2013  Patrick Lehner
+# Copyright (C) 2013-2014  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
 #   - Dominik D. Geyer
+#   - Phil Thompson
 #
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
