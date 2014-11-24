@@ -39,4 +39,7 @@ The `<username>` bit should be replaced with your username or that of any other 
 
 Please also note that if either of the paths involved (script or target) contains spaces or special characters, you need to escape them accordingly; if you don't know how to do that, the internet will help you, or feel free to ask here or contact me directly.
 
-[Install gitwatch as a service on Debian with supervisord.](https://github.com/nevik/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord).
+##Other Articles
+
+###On the Gitwatch Wiki
+* [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/nevik/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
