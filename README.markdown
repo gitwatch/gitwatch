@@ -38,3 +38,5 @@ A central place to put startup scripts on Linux is generally `/etc/rc.local` (to
 The `<username>` bit should be replaced with your username or that of any other (non-root) user account; it only needs write-access to the git repository of the file/folder you want to watch. The ampersand (`&`) at the end sends the launched process into the background (this is important if you have other calls in `rc.local` after the mentioned line, because the `gitwatch` call does not usually return).
 
 Please also note that if either of the paths involved (script or target) contains spaces or special characters, you need to escape them accordingly; if you don't know how to do that, the internet will help you, or feel free to ask here or contact me directly.
+
+[Install gitwatch as a service on Debian with supervisord.](https://github.com/nevik/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord).
