@@ -38,6 +38,9 @@ SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 
+#   Change to YES to append status to commit message.
+COMMITMSG_APPENDSTATUS=NO
+
 shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
@@ -177,6 +180,12 @@ while true; do
     fi
     cd $TARGETDIR # CD into right dir
     $GIT add $GIT_ADD_ARGS # add file(s) to index
+    if [ x$COMMITMSG_APPENDSTATUS = xYES ]; then
+        # Append status to commit message if enabled
+        FORMATTED_COMMITMSG="$FORMATTED_COMMITMSG
+
+`git status --short`"
+    fi
     $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
     if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
