@@ -37,8 +37,6 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
-
-#   Change to YES to append status to commit message.
 COMMITMSG_APPENDSTATUS=NO
 
 shelp () { # Print a message about how to use this script
@@ -76,6 +74,7 @@ shelp () { # Print a message about how to use this script
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo " -a               append \`git status --short\` to commit message"
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -96,9 +95,10 @@ stderr () {
     echo $1 >&2
 }
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
+while getopts ab:d:hm:p:r:s: option # Process command line options 
 do 
     case "${option}" in 
+        a) COMMITMSG_APPENDSTATUS=YES;;
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
