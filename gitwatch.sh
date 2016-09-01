@@ -132,7 +132,7 @@ IN=$(readlink -f "$1")
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
-    GIT_ADD_ARGS="." # add "." (CWD) recursively to index
+    GIT_ADD_ARGS="-A" # add new and modified files to the index, remove deleted files from the index.
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
