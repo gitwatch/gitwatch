@@ -8,6 +8,24 @@ That's really up to you, but here are some examples:
 * **document files**: if you use an editor that does not have built-in git support (or maybe if you don't like the git support it has), you can use gitwatch to automatically commit your files when you save them, or combine it with the editor's auto-save feature to fully automatically and regularly track your changes
 * *more stuff!* If you have any other uses, or can think of ones, please let us know, and we can add them to this list!
 
+##Installation
+
+`gitwatch` can be installed in various ways.
+
+### bpkg
+
+```sh
+$ bpkg install -g nevik/gitwatch
+```
+
+### source
+
+```sh
+$ git clone https://github.com/nevik/gitwatch.git
+$ cd gitwatch
+$ install -b gitwatch.sh /usr/local/bin/gitwatch
+```
+
 ##Requirements
 To run this script, you must have installed and globally available:
 * `git` ( [git/git](https://github.com/git/git) | http://www.git-scm.com )
