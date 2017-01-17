@@ -37,6 +37,7 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+FILE_EVENTS="close_write,move,delete"
 
 shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
@@ -73,6 +74,10 @@ shelp () { # Print a message about how to use this script
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo " -e <events>      file events passed to inotifywait to watch (defaults to "
+    echo "                  $FILE_EVENTS)"
+    echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
+    echo "                  dir events are file events plus 'create'"
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -93,7 +98,7 @@ stderr () {
     echo $1 >&2
 }
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
+while getopts b:d:hm:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
@@ -102,8 +107,12 @@ do
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
+        e) FILE_EVENTS=${OPTARG};;
     esac
 done
+
+DIR_EVENTS="$FILE_EVENTS,create"
+
 
 shift $((OPTIND-1)) # Shift the input arguments, so that the input file (last arg) is $1 in the code below
 
@@ -131,12 +140,12 @@ IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
+    INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e $DIR_EVENTS $TARGETDIR" # construct inotifywait-commandline
     GIT_ADD_ARGS="." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="$INW -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
+    INCOMMAND="$INW -qq -e $FILE_EVENTS $IN" # construct inotifywait-commandline
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
