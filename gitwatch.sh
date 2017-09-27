@@ -175,10 +175,13 @@ while true; do
     if [ -n "$DATE_FMT" ]; then
         FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
-    cd $TARGETDIR # CD into right dir
-    $GIT add $GIT_ADD_ARGS # add file(s) to index
-    $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+    STATUS=$($GIT status -s)
+    if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
+	cd $TARGETDIR # CD into right dir
+	$GIT add $GIT_ADD_ARGS # add file(s) to index
+	$GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-    if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
+	if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
+    fi
 done
 
