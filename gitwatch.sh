@@ -22,7 +22,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 #
-#   Idea and original code taken from http://stackoverflow.com/a/965274 
+#   Idea and original code taken from http://stackoverflow.com/a/965274
 #       (but heavily modified by now)
 #
 #   Requires the command 'inotifywait' to be available, which is part of
@@ -68,6 +68,7 @@ shelp () { # Print a message about how to use this script
     echo "                    'git push <remote> <current branch>:<branch>'  where"
     echo "                    <current branch> is the target of HEAD (at launch)"
     echo "                  if no remote was define with -r, this option has no effect"
+    echo " -n               add newly created files. (default: not to add newly created files.)"
     echo " -m <msg>         the commit message used for each commit; all occurences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
@@ -93,13 +94,14 @@ stderr () {
     echo $1 >&2
 }
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
-do 
-    case "${option}" in 
+while getopts b:d:hm:np:r:s: option # Process command line options
+do
+    case "${option}" in
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
         m) COMMITMSG=${OPTARG};;
+        n) ADDNEWLYCREATED="1";;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
     esac
@@ -131,8 +133,13 @@ IN=$(readlink -f "$1")
 
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
-    GIT_ADD_ARGS="." # add "." (CWD) recursively to index
+    if [ -z "$ADDNEWLYCREATED" ]; then
+        INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
+        GIT_ADD_ARGS="." # add "." (CWD) recursively to index
+    else
+        INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete $TARGETDIR" # construct inotifywait-commandline
+        GIT_ADD_ARGS="" # add "." (CWD) recursively to index
+    fi
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
@@ -176,9 +183,10 @@ while true; do
         FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
     cd $TARGETDIR # CD into right dir
-    $GIT add $GIT_ADD_ARGS # add file(s) to index
+    if [ -z "$GIT_ADD_ARGS" ]; then
+        $GIT add $GIT_ADD_ARGS # add file(s) to index
+    fi
     $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
     if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
 done
-

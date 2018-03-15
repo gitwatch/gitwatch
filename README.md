@@ -44,7 +44,7 @@ Then it goes into the main loop (which will run forever, until the script is for
 * watch for changes to the file/directory using `inotifywait` (`inotifywait` will block until something happens)
 * wait 2 seconds
 * `cd` into the directory [b] / the directory containing the file [a] \(because `git` likes to operate locally)
-* `git add <file>`[a] / `git add .`[b]
+* `git add <file>`[a] / run `git add .`[b] only if gitwatch.sh has been called with -n option
 * `git commit -m "Scripted auto-commit on change (<date>)"`[a] / `git commit -a -m"Scripted auto-commit on change (<date>)"`[b]
 * if a remote is defined (with `-r`) do a push after the commit (a specific branch can be selected with `-b`)
 
