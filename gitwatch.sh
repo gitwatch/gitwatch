@@ -132,7 +132,30 @@ done
 unset cmd
 
 # Expand the path to the target to absolute path
-IN=$(readlink -f "$1")
+if [ "$(uname)" == "Darwin" ]; then
+  # implement readlink -f in Darwin
+  # source: https://stackoverflow.com/questions/1055671/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac
+  TARGET_FILE=$1
+
+  cd `dirname $TARGET_FILE`
+  TARGET_FILE=`basename $TARGET_FILE`
+
+  # Iterate down a (possible) chain of symlinks
+  while [ -L "$TARGET_FILE" ]
+  do
+    TARGET_FILE=`readlink $TARGET_FILE`
+    cd `dirname $TARGET_FILE`
+    TARGET_FILE=`basename $TARGET_FILE`
+  done
+
+  # Compute the canonicalized name by finding the physical path 
+  # for the directory we're in and appending the target file.
+  PHYS_DIR=`pwd -P`
+  RESULT=$PHYS_DIR/$TARGET_FILE
+  IN=$RESULT
+else
+  IN=$(readlink -f "$1")
+fi
 
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
@@ -140,6 +163,7 @@ if [ -d $1 ]; then # if the target is a directory
     
     # Mac/fswatch only supports watching paths
     if [ "$(uname)" == "Darwin" ]; then
+      echo "$TARGETDIR"
       INCOMMAND="$INW -1 $TARGETDIR"
     fi
     
@@ -192,4 +216,3 @@ while true; do
 
     if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
 done
-
