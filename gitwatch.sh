@@ -116,9 +116,26 @@ is_command () { # Tests for the availability of a command
 	which $1 &>/dev/null
 }
 
+# Detect machine
+MACHINE=""
+if [ "$(uname)" == "Darwin" ]; then
+    MACHINE="Darwin"     
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+    MACHINE="Linux" 
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+    MACHINE="MINGW32_NT" 
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW64_NT" ]; then
+    MACHINE="MINGW64_NT" 
+fi
+
 # if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
 if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
+
+# if Mac, use fswatch
+if [ "$(MACHINE)" == "Darwin" ]; then
+  INW="fswatch"
+fi
 
 # Check availability of selected binaries and die if not met
 for cmd in "$GIT" "$INW"; do
@@ -132,6 +149,12 @@ IN=$(readlink -f "$1")
 if [ -d $1 ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
+    
+    # Mac/fswatch only supports watching paths
+    if [ "$(MACHINE)" == "Darwin" ]; then
+      INCOMMAND="$INW -1 $TARGETDIR"
+    fi
+    
     GIT_ADD_ARGS="." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
 elif [ -f $1 ]; then # if the target is a single file
