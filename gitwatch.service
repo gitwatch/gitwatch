@@ -2,7 +2,7 @@
 Description=Watch file or directory and git commit all changes
 
 [Service]
-ExecStart=/opt/gitwatch/gitwatch.sh %I
+ExecStart=gitwatch %I
 ExecStop=/bin/true
 
 [Install]

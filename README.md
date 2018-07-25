@@ -72,8 +72,6 @@ The `<username>` bit should be replaced with your username or that of any other 
 
 #### systemd
 
-Note that this method assumes you have Gitwatch installed in `/opt/gitwatch`
-
 - Copy `gitwatch.service` to `$HOME/.config/systemd/user/gitwatch@.service`
 - Start and enable the service for a given path by running `systemctl --user enable --now gitwatch@$(systemd-escape /path/to/folder/to/monitor)`
 
