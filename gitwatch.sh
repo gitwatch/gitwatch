@@ -37,6 +37,7 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+ONE_SHOT=0
 
 shelp () { # Print a message about how to use this script
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
@@ -73,6 +74,7 @@ shelp () { # Print a message about how to use this script
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo " -o               One shot run.  Do not "
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -93,7 +95,7 @@ stderr () {
     echo $1 >&2
 }
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
+while getopts b:d:hm:p:r:s:o option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
@@ -102,6 +104,7 @@ do
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
+        o) ONE_SHOT=1;;
     esac
 done
 
@@ -118,10 +121,14 @@ is_command () { # Tests for the availability of a command
 
 # if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
-if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
+REQUIRED_COMMANDS=("$GIT")
+if [ $ONE_SHOT == 0 ]; then
+    if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
+    REQUIRED_COMMANDS+=("$INW")
+fi
 
 # Check availability of selected binaries and die if not met
-for cmd in "$GIT" "$INW"; do
+for cmd in ${REQUIRED_COMMANDS[*]}; do
 	is_command $cmd || { stderr "Error: Required command '$cmd' not found." ; exit 1; }
 done
 unset cmd
@@ -170,8 +177,10 @@ fi
 
 # main program loop: wait for changes and commit them
 while true; do
-    $INCOMMAND # wait for changes
-    sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
+    if [ $ONE_SHOT == 0 ]; then
+        $INCOMMAND # wait for changes
+        sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
+    fi
     if [ -n "$DATE_FMT" ]; then
         FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
     fi
@@ -182,6 +191,9 @@ while true; do
 	$GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
 	if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
+    fi
+    if [ $ONE_SHOT == 1 ]; then
+        break
     fi
 done
 
