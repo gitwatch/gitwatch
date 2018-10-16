@@ -72,12 +72,10 @@ The `<username>` bit should be replaced with your username or that of any other 
 
 #### systemd
 
-Note that this method assumes you have Gitwatch installed in `/opt/gitwatch`
-
-- Copy `gitwatch.service` to `$HOME/.config/systemd/user`
-- Start and enable the service for a given path by running `systemctl --user enable --now gitwatch.service@/path/to/folder/to/monitor`
+- If installed to a path other than `/usr/local/bin/gitwatch`, modify `gitwatch@.service` to suit
+- Create dir if it does not exist and copy systemd service file with `mkdir -p "$HOME/.config/systemd/user" && cp gitwatch@.service $HOME/.config/systemd/user`
+- Start and enable the service for a given path by running `systemctl --user --now enable gitwatch@$(systemd-escape "/path/to/folder/to/monitor").service`
 
 ## Other Articles
-
 ### On the Gitwatch Wiki
 * [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/nevik/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
