@@ -2,10 +2,12 @@
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
-# Copyright (C) 2013  Patrick Lehner
+# Copyright (C) 2013-2018  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
 #   - Dominik D. Geyer
+#   - Phil Thompson
+#   - Dave Musicant
 #
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
@@ -37,8 +39,10 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+EVENTS="close_write,move,delete,create"
 
-shelp () { # Print a message about how to use this script
+# Print a message about how to use this script
+shelp () {
     echo "gitwatch - watch file or directory and git commit all changes as they happen"
     echo ""
     echo "Usage:"
@@ -55,8 +59,8 @@ shelp () { # Print a message about how to use this script
     echo " -d <fmt>         the format string used for the timestamp in the commit"
     echo "                  message; see 'man date' for details; default is "
     echo "                  \"+%Y-%m-%d %H:%M:%S\""
-    echo " -r <remote>      if defined, a 'git push' to the given <remote> is done after"
-    echo "                  every commit"
+    echo " -r <remote>      if given and non-empty, a 'git push' to the given <remote>"
+    echo "                  is done after every commit; default is empty, i.e. no push"
     echo " -b <branch>      the branch which should be pushed automatically;"
     echo "                - if not given, the push command used is  'git push <remote>',"
     echo "                    thus doing a default push (see git man pages for details)"
@@ -67,12 +71,15 @@ shelp () { # Print a message about how to use this script
     echo "                    then the command used is"
     echo "                    'git push <remote> <current branch>:<branch>'  where"
     echo "                    <current branch> is the target of HEAD (at launch)"
-    echo "                  if no remote was define with -r, this option has no effect"
+    echo "                  if no remote was defined with -r, this option has no effect"
     echo " -m <msg>         the commit message used for each commit; all occurences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+    echo " -e <events>      events passed to inotifywait to watch (defaults to "   
+    echo "                  '$EVENTS')"
+    echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -89,11 +96,27 @@ shelp () { # Print a message about how to use this script
     echo "and inotifywait, respectively."
 }
 
+# print all arguments to stderr
 stderr () {
-    echo $1 >&2
+    echo $@ >&2
 }
 
-while getopts b:d:hm:p:r:s: option # Process command line options 
+# clean up at end of program, killing the remaining sleep process if it still exists
+cleanup () {
+    if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
+        kill $SLEEP_PID &>/dev/null
+    fi
+    exit 0
+}
+
+# Tests for the availability of a command
+is_command () {
+	which "$1" &>/dev/null
+}
+
+###############################################################################
+
+while getopts b:d:hm:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
@@ -102,6 +125,7 @@ do
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
+        e) EVENTS=${OPTARG};;
     esac
 done
 
@@ -112,31 +136,34 @@ if [ $# -ne 1 ]; then # If no command line arguments are left (that's bad: no ta
     exit # and exit
 fi
 
-is_command () { # Tests for the availability of a command
-	which $1 &>/dev/null
-}
-
 # if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
 if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
 
 # Check availability of selected binaries and die if not met
 for cmd in "$GIT" "$INW"; do
-	is_command $cmd || { stderr "Error: Required command '$cmd' not found." ; exit 1; }
+	is_command "$cmd" || { stderr "Error: Required command '$cmd' not found." ; exit 1; }
 done
 unset cmd
+
+###############################################################################
+
+SLEEP_PID="" # pid of timeout subprocess
+
+trap "cleanup" EXIT # make sure the timeout is killed when exiting script
+
 
 # Expand the path to the target to absolute path
 IN=$(readlink -f "$1")
 
-if [ -d $1 ]; then # if the target is a directory
+if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="$INW --exclude=\"^${TARGETDIR}/.git\" -qqr -e close_write,move,delete,create $TARGETDIR" # construct inotifywait-commandline
-    GIT_ADD_ARGS="." # add "." (CWD) recursively to index
-    GIT_COMMIT_ARGS="-a" # add -a switch to "commit" call just to be sure
-elif [ -f $1 ]; then # if the target is a single file
+    INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
+    GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
+    GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
+elif [ -f "$1" ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="$INW -qq -e close_write,move,delete $IN" # construct inotifywait-commandline
+    INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\"" # construct inotifywait-commandline
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
@@ -150,38 +177,52 @@ if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %
     FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
 fi
 
-cd $TARGETDIR # CD into right dir
+cd "$TARGETDIR" # CD into right dir
 
 if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-        PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
+        PUSH_CMD="'$GIT' push $REMOTE" # Branch not set, push to remote without a branch
     else
         # check if we are on a detached HEAD
         HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
         if [ $? -eq 0 ]; then # HEAD is not detached
-            PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+            PUSH_CMD="'$GIT' push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
         else # HEAD is detached
-            PUSH_CMD="$GIT push $REMOTE $BRANCH"
+            PUSH_CMD="'$GIT' push $REMOTE $BRANCH"
         fi
     fi
 else
     PUSH_CMD="" # if not remote is selected, make sure push command is empty
 fi
 
+###############################################################################
+
 # main program loop: wait for changes and commit them
-while true; do
-    $INCOMMAND # wait for changes
-    sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
-    if [ -n "$DATE_FMT" ]; then
-        FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
+#   whenever inotifywait reports a change, we spawn a timer (sleep process) that gives the writing
+#   process some time (in case there are a lot of changes or w/e); if there is already a timer
+#   running when we receive an event, we kill it and start a new one; thus we only commit if there
+#   have been no changes reported during a whole timeout period
+eval $INCOMMAND | while read -r line; do 
+    # is there already a timeout process running?
+    if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
+        # kill it and wait for completion
+        kill $SLEEP_PID &>/dev/null || true
+        wait $SLEEP_PID &>/dev/null || true
     fi
-    cd $TARGETDIR # CD into right dir
-    STATUS=$($GIT status -s)
-    if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
-	$GIT add $GIT_ADD_ARGS # add file(s) to index
-	$GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-	if [ -n "$PUSH_CMD" ]; then $PUSH_CMD; fi
-    fi
+    # start timeout process
+    (
+        sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
+
+        if [ -n "$DATE_FMT" ]; then
+            FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
+        fi
+        cd "$TARGETDIR" # CD into right dir
+        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
+        "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+
+        if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
+    ) & # and send into background
+
+    SLEEP_PID=$! # and remember its PID
 done
-
