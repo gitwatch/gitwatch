@@ -30,24 +30,15 @@
     # then commit and push
     cd remote
 
-    # According to inotify documentation, a race condition results if you write to directory
-    # too soon after it has been created; hence, a short wait.
+    # According to inotify documentation, a race condition results if you write
+    # to directory too soon after it has been created; hence, a short wait.
     sleep 1
     echo "line1" >> file1.txt
 
-    # Wait a bit for inotify to figure out the file has changed, and do its add, commit, and push.
+    # Wait a bit for inotify to figure out the file has changed, and do its add,
+    # commit, and push.
     sleep 5
     
-    #run git status -s
-    #[ "$output" = "?? file1.txt" ]
-    #run git add file1.txt
-    #[ "$output" = "" ]
-
-
-    #sleep 5
-    #git commit -am "added file"
-    #git push
-
     # Verify that push happened
     currentcommit=$(git rev-parse master)
     remotecommit=$(git rev-parse origin/master)
@@ -56,7 +47,6 @@
     # Remove testing directories
     cd /tmp
     rm -rf $testdir
-
 }
 
 
@@ -64,4 +54,3 @@ teardown() {
     # Make sure gitwatch script gets killed if script stopped background
     kill $GITWATCH_PID
 }
-
