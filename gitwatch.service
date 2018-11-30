@@ -1,0 +1,6 @@
+[Unit]
+Description=Watch file or directory and git commit all changes
+
+[Service]
+ExecStart=/opt/gitwatch/gitwatch.sh %I
+ExecStop=/bin/true

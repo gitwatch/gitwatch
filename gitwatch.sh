@@ -2,11 +2,12 @@
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
-# Copyright (C) 2013-2014  Patrick Lehner
+# Copyright (C) 2013-2018  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
 #   - Dominik D. Geyer
 #   - Phil Thompson
+#   - Dave Musicant
 #
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
@@ -217,7 +218,7 @@ eval $INCOMMAND | while read -r line; do
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
         fi
         cd "$TARGETDIR" # CD into right dir
-        "$GIT" add -u $GIT_ADD_ARGS # add file(s) to index
+        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
         if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
