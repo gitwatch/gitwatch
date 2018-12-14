@@ -1,0 +1,8 @@
+language: bash
+before_install:
+  - sudo add-apt-repository ppa:duggan/bats --yes
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq bats
+  - sudo apt-get install inotify-tools
+script:
+  - bats testscript.bats
