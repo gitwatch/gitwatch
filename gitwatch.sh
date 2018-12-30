@@ -216,6 +216,7 @@ diff-lines() {
         elif [[ $REPLY =~ @@\ -[0-9]+(,[0-9]+)?\ \+([0-9]+)(,[0-9]+)?\ @@.* ]]; then
             line=${BASH_REMATCH[2]}
         elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
+            REPLY=${REPLY:0:150}           # limit the line width, so it fits in a single line in most git log outputs
             echo "$path:$line: $REPLY"
             if [[ ${BASH_REMATCH[2]} != - ]]; then
                 ((line++))
