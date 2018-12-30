@@ -39,6 +39,8 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+LISTCHANGES=-1
+LISTCHANGES_COLOR="--color=always"
 EVENTS="close_write,move,delete,create"
 
 # Print a message about how to use this script
@@ -47,7 +49,7 @@ shelp () {
     echo ""
     echo "Usage:"
     echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-    echo "          [-m <msg>] <target>"
+    echo "          [-m <msg>] [-l|-L <lines>] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository, or in the case of a folder, it may also be the top"
@@ -72,6 +74,9 @@ shelp () {
     echo "                    'git push <remote> <current branch>:<branch>'  where"
     echo "                    <current branch> is the target of HEAD (at launch)"
     echo "                  if no remote was defined with -r, this option has no effect"
+    echo " -l <lines>       log the actual changes made in this commit, upto a given"
+    echo "                  number of lines, or all lines if 0 is given"
+    echo " -L <lines>       same as -l but without colored formatting"
     echo " -m <msg>         the commit message used for each commit; all occurences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
@@ -116,12 +121,14 @@ is_command () {
 
 ###############################################################################
 
-while getopts b:d:hm:p:r:s:e: option # Process command line options 
+while getopts b:d:h:L:l:m:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
+        l) LISTCHANGES=${OPTARG};;
+        L) LISTCHANGES=${OPTARG}; LISTCHANGES_COLOR="";;
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
@@ -195,6 +202,28 @@ else
     PUSH_CMD="" # if not remote is selected, make sure push command is empty
 fi
 
+# A function to reduce git diff output to the actual changed content, and insert file line numbers.
+# Based on "https://stackoverflow.com/a/12179492/199142"
+diff-lines() {
+    local path=
+    local line=
+    while read; do
+        esc=$'\033'
+        if [[ $REPLY =~ ---\ (a/)?.* ]]; then
+            continue
+        elif [[ $REPLY =~ \+\+\+\ (b/)?([^[:blank:]$esc]+).* ]]; then
+            path=${BASH_REMATCH[2]}
+        elif [[ $REPLY =~ @@\ -[0-9]+(,[0-9]+)?\ \+([0-9]+)(,[0-9]+)?\ @@.* ]]; then
+            line=${BASH_REMATCH[2]}
+        elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
+            echo "$path:$line: $REPLY"
+            if [[ ${BASH_REMATCH[2]} != - ]]; then
+                ((line++))
+            fi
+        fi
+    done
+}
+
 ###############################################################################
 
 # main program loop: wait for changes and commit them
@@ -217,6 +246,21 @@ eval $INCOMMAND | while read -r line; do
         if [ -n "$DATE_FMT" ]; then
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
         fi
+
+        if [[ "$LISTCHANGES" -ge 0 ]]; then    # allow listing diffs in the commit log message, unless if there are too many lines changed
+            DIFF_COMMITMSG="$(git diff -U0 $LISTCHANGES_COLOR | diff-lines)"
+            LENGTH_DIFF_COMMITMSG=0
+            if [[ "$LISTCHANGES" -ge 1 ]]; then
+                LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
+            fi
+            if [[ "$LENGTH_DIFF_COMMITMSG" -le $LISTCHANGES ]]; then
+                FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
+            else
+                #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
+                FORMATTED_COMMITMSG=$(git diff --stat | grep '|')
+            fi
+        fi
+
         cd "$TARGETDIR" # CD into right dir
         "$GIT" add $GIT_ADD_ARGS # add file(s) to index
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
