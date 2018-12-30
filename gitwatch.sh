@@ -207,9 +207,11 @@ fi
 diff-lines() {
     local path=
     local line=
+    local previous_path=
     while read; do
         esc=$'\033'
-        if [[ $REPLY =~ ---\ (a/)?.* ]]; then
+        if [[ $REPLY =~ ---\ (a/)?([^[:blank:]$esc]+).* ]]; then
+            previous_path=${BASH_REMATCH[2]}
             continue
         elif [[ $REPLY =~ \+\+\+\ (b/)?([^[:blank:]$esc]+).* ]]; then
             path=${BASH_REMATCH[2]}
@@ -217,7 +219,12 @@ diff-lines() {
             line=${BASH_REMATCH[2]}
         elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
             REPLY=${REPLY:0:150}           # limit the line width, so it fits in a single line in most git log outputs
-            echo "$path:$line: $REPLY"
+            if [[ "$path" == "/dev/null" ]]; then
+                echo "File $previous_path deleted or moved."
+                continue
+            else
+                echo "$path:$line: $REPLY"
+            fi
             if [[ ${BASH_REMATCH[2]} != - ]]; then
                 ((line++))
             fi
@@ -255,23 +262,24 @@ eval $INCOMMAND | while read -r line; do
                 LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
             fi
             if [[ "$LENGTH_DIFF_COMMITMSG" -le $LISTCHANGES ]]; then
-                FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
+                # Use git diff as the commit msg, unless if files were added or deleted but not modified
+                if [ -n "$DIFF_COMMITMSG" ]; then
+                    FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
+                else
+                    FORMATTED_COMMITMSG="New files added: $(git status -s)"
+                fi
             else
                 #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
                 FORMATTED_COMMITMSG=$(git diff --stat | grep '|')
             fi
         fi
 
-        if [ -n "$FORMATTED_COMMITMSG" ]; then     # if files were modified, or LISTCHANGES is disabled, then commit the changes!
-            cd "$TARGETDIR" # CD into right dir
-            "$GIT" add $GIT_ADD_ARGS # add file(s) to index
-            "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+        cd "$TARGETDIR" # CD into right dir
+        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
+        "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-            if [ -n "$PUSH_CMD" ]; then
-                eval $PUSH_CMD;
-            fi
-        else
-            echo "Ignoring an empty commit"
+        if [ -n "$PUSH_CMD" ]; then
+            eval $PUSH_CMD;
         fi
     ) & # and send into background
 
