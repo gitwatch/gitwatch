@@ -261,11 +261,17 @@ eval $INCOMMAND | while read -r line; do
             fi
         fi
 
-        cd "$TARGETDIR" # CD into right dir
-        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
-        "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+        if [ -n "$FORMATTED_COMMITMSG" ]; then     # if files were modified, or LISTCHANGES is disabled, then commit the changes!
+            cd "$TARGETDIR" # CD into right dir
+            "$GIT" add $GIT_ADD_ARGS # add file(s) to index
+            "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-        if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
+            if [ -n "$PUSH_CMD" ]; then
+                eval $PUSH_CMD;
+            fi
+        else
+            echo "Ignoring an empty commit"
+        fi
     ) & # and send into background
 
     SLEEP_PID=$! # and remember its PID
