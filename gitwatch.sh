@@ -24,7 +24,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 #
-#   Idea and original code taken from http://stackoverflow.com/a/965274 
+#   Idea and original code taken from http://stackoverflow.com/a/965274
+#       original work by Lester Buck
 #       (but heavily modified by now)
 #
 #   Requires the command 'inotifywait' to be available, which is part of
@@ -39,6 +40,8 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+LISTCHANGES=-1
+LISTCHANGES_COLOR="--color=always"
 EVENTS="close_write,move,delete,create"
 
 # Print a message about how to use this script
@@ -47,21 +50,21 @@ shelp () {
     echo ""
     echo "Usage:"
     echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-    echo "          [-m <msg>] <target>"
+    echo "          [-m <msg>] [-l|-L <lines>] <target>"
     echo ""
     echo "Where <target> is the file or folder which should be watched. The target needs"
     echo "to be in a Git repository, or in the case of a folder, it may also be the top"
     echo "folder of the repo."
     echo ""
-    echo " -s <secs>        after detecting a change to the watched file or directory,"
+    echo " -s <secs>        After detecting a change to the watched file or directory,"
     echo "                  wait <secs> seconds until committing, to allow for more"
     echo "                  write actions of the same batch to finish; default is 2sec"
-    echo " -d <fmt>         the format string used for the timestamp in the commit"
+    echo " -d <fmt>         The format string used for the timestamp in the commit"
     echo "                  message; see 'man date' for details; default is "
     echo "                  \"+%Y-%m-%d %H:%M:%S\""
-    echo " -r <remote>      if given and non-empty, a 'git push' to the given <remote>"
+    echo " -r <remote>      If given and non-empty, a 'git push' to the given <remote>"
     echo "                  is done after every commit; default is empty, i.e. no push"
-    echo " -b <branch>      the branch which should be pushed automatically;"
+    echo " -b <branch>      The branch which should be pushed automatically;"
     echo "                - if not given, the push command used is  'git push <remote>',"
     echo "                    thus doing a default push (see git man pages for details)"
     echo "                - if given and"
@@ -72,12 +75,15 @@ shelp () {
     echo "                    'git push <remote> <current branch>:<branch>'  where"
     echo "                    <current branch> is the target of HEAD (at launch)"
     echo "                  if no remote was defined with -r, this option has no effect"
-    echo " -m <msg>         the commit message used for each commit; all occurences of"
+    echo " -l <lines>       Log the actual changes made in this commit, upto a given"
+    echo "                  number of lines, or all lines if 0 is given"
+    echo " -L <lines>       Same as -l but without colored formatting"
+    echo " -m <msg>         The commit message used for each commit; all occurences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
     echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
-    echo " -e <events>      events passed to inotifywait to watch (defaults to "   
+    echo " -e <events>      Events passed to inotifywait to watch (defaults to "
     echo "                  '$EVENTS')"
     echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
     echo ""
@@ -116,12 +122,14 @@ is_command () {
 
 ###############################################################################
 
-while getopts b:d:hm:p:r:s:e: option # Process command line options 
+while getopts b:d:h:L:l:m:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
+        l) LISTCHANGES=${OPTARG};;
+        L) LISTCHANGES=${OPTARG}; LISTCHANGES_COLOR="";;
         m) COMMITMSG=${OPTARG};;
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
@@ -195,6 +203,36 @@ else
     PUSH_CMD="" # if not remote is selected, make sure push command is empty
 fi
 
+# A function to reduce git diff output to the actual changed content, and insert file line numbers.
+# Based on "https://stackoverflow.com/a/12179492/199142" by John Mellor
+diff-lines() {
+    local path=
+    local line=
+    local previous_path=
+    while read; do
+        esc=$'\033'
+        if [[ $REPLY =~ ---\ (a/)?([^[:blank:]$esc]+).* ]]; then
+            previous_path=${BASH_REMATCH[2]}
+            continue
+        elif [[ $REPLY =~ \+\+\+\ (b/)?([^[:blank:]$esc]+).* ]]; then
+            path=${BASH_REMATCH[2]}
+        elif [[ $REPLY =~ @@\ -[0-9]+(,[0-9]+)?\ \+([0-9]+)(,[0-9]+)?\ @@.* ]]; then
+            line=${BASH_REMATCH[2]}
+        elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
+            REPLY=${REPLY:0:150}           # limit the line width, so it fits in a single line in most git log outputs
+            if [[ "$path" == "/dev/null" ]]; then
+                echo "File $previous_path deleted or moved."
+                continue
+            else
+                echo "$path:$line: $REPLY"
+            fi
+            if [[ ${BASH_REMATCH[2]} != - ]]; then
+                ((line++))
+            fi
+        fi
+    done
+}
+
 ###############################################################################
 
 # main program loop: wait for changes and commit them
@@ -217,11 +255,33 @@ eval $INCOMMAND | while read -r line; do
         if [ -n "$DATE_FMT" ]; then
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
         fi
+
+        if [[ "$LISTCHANGES" -ge 0 ]]; then    # allow listing diffs in the commit log message, unless if there are too many lines changed
+            DIFF_COMMITMSG="$(git diff -U0 $LISTCHANGES_COLOR | diff-lines)"
+            LENGTH_DIFF_COMMITMSG=0
+            if [[ "$LISTCHANGES" -ge 1 ]]; then
+                LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
+            fi
+            if [[ "$LENGTH_DIFF_COMMITMSG" -le $LISTCHANGES ]]; then
+                # Use git diff as the commit msg, unless if files were added or deleted but not modified
+                if [ -n "$DIFF_COMMITMSG" ]; then
+                    FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
+                else
+                    FORMATTED_COMMITMSG="New files added: $(git status -s)"
+                fi
+            else
+                #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
+                FORMATTED_COMMITMSG=$(git diff --stat | grep '|')
+            fi
+        fi
+
         cd "$TARGETDIR" # CD into right dir
         "$GIT" add $GIT_ADD_ARGS # add file(s) to index
         "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-        if [ -n "$PUSH_CMD" ]; then eval $PUSH_CMD; fi
+        if [ -n "$PUSH_CMD" ]; then
+            eval $PUSH_CMD;
+        fi
     ) & # and send into background
 
     SLEEP_PID=$! # and remember its PID
