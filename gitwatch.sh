@@ -24,7 +24,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #############################################################################
 #
-#   Idea and original code taken from http://stackoverflow.com/a/965274 
+#   Idea and original code taken from http://stackoverflow.com/a/965274
+#       original work by Lester Buck
 #       (but heavily modified by now)
 #
 #   Requires the command 'inotifywait' to be available, which is part of
@@ -203,7 +204,7 @@ else
 fi
 
 # A function to reduce git diff output to the actual changed content, and insert file line numbers.
-# Based on "https://stackoverflow.com/a/12179492/199142"
+# Based on "https://stackoverflow.com/a/12179492/199142" by John Mellor
 diff-lines() {
     local path=
     local line=
