@@ -276,11 +276,14 @@ eval $INCOMMAND | while read -r line; do
         fi
 
         cd "$TARGETDIR" # CD into right dir
-        "$GIT" add $GIT_ADD_ARGS # add file(s) to index
-        "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+        STATUS=$($GIT status -s)
+        if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
+            "$GIT" add $GIT_ADD_ARGS # add file(s) to index
+            "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
-        if [ -n "$PUSH_CMD" ]; then
-            eval $PUSH_CMD;
+            if [ -n "$PUSH_CMD" ]; then
+                eval $PUSH_CMD;
+            fi
         fi
     ) & # and send into background
 
