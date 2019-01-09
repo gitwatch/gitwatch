@@ -7,9 +7,13 @@
 
 load startup-shutdown
 
-@test "remote git dirs working" {
-    # Start up gitwatch, intentionally in wrong directory, wiht remote dir specified
-    ${BATS_TEST_DIRNAME}/../gitwatch.sh -g "$testdir/local/remote" "/tmp" 3>&- &
+@test "remote git dirs working, with commit logging" {
+    # Move .git somewhere else
+    dotgittestdir=$(mktemp -d)
+    mv "$testdir/local/remote/.git" "$dotgittestdir"
+
+    # Start up gitwatch, intentionally in wrong directory, with remote dir specified
+    ${BATS_TEST_DIRNAME}/../gitwatch.sh -l 10 -g "$dotgittestdir/.git" "$testdir/local/remote" 3>&- &
     GITWATCH_PID=$!
 
     # Keeps kill message from printing to screen
@@ -25,17 +29,23 @@ load startup-shutdown
 
     # Wait a bit for inotify to figure out the file has changed, and do its add,
     # and commit
-    sleep 5
+    sleep $WAITTIME
 
     # Store commit for later comparison
-    lastcommit=$(git rev-parse master)
+    lastcommit=$(git --git-dir $dotgittestdir/.git rev-parse master)
 
     # Make a new change
     echo "line2" >> file1.txt
-    sleep 5
+    sleep $WAITTIME
     
     # Verify that new commit has happened
-    currentcommit=$(git rev-parse master)
+    currentcommit=$(git --git-dir $dotgittestdir/.git rev-parse master)
     [ "$lastcommit" != "$currentcommit" ]
+
+    # Check commit log that the diff is in there
+    run git --git-dir $dotgittestdir/.git log -1 --oneline
+    [[ $output == *"file1.txt"* ]]
+
+    rm -rf $dotgittestdir
 }
 

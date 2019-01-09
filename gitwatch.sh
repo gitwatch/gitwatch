@@ -43,6 +43,7 @@ COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 LISTCHANGES=-1
 LISTCHANGES_COLOR="--color=always"
 EVENTS="close_write,move,delete,create"
+GIT_DIR=""
 
 # Print a message about how to use this script
 shelp () {
@@ -75,6 +76,8 @@ shelp () {
     echo "                    'git push <remote> <current branch>:<branch>'  where"
     echo "                    <current branch> is the target of HEAD (at launch)"
     echo "                  if no remote was defined with -r, this option has no effect"
+    echo " -g <path>        Location of the .git directory, if stored elsewhere in"
+    echo "                  a remote location. This specifies the --git-dir parameter"
     echo " -l <lines>       Log the actual changes made in this commit, upto a given"
     echo "                  number of lines, or all lines if 0 is given"
     echo " -L <lines>       Same as -l but without colored formatting"
@@ -122,12 +125,13 @@ is_command () {
 
 ###############################################################################
 
-while getopts b:d:h:L:l:m:p:r:s:e: option # Process command line options 
+while getopts b:d:h:g:L:l:m:p:r:s:e: option # Process command line options 
 do 
     case "${option}" in 
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
+        g) GIT_DIR=${OPTARG};;
         l) LISTCHANGES=${OPTARG};;
         L) LISTCHANGES=${OPTARG}; LISTCHANGES_COLOR="";;
         m) COMMITMSG=${OPTARG};;
@@ -179,6 +183,16 @@ else
     exit 1
 fi
 
+# Verify that $GIT_DIR is appropriately set; add parameters to git command
+if [ -z "$GIT_DIR" ]; then
+    GIT_DIR="$TARGETDIR/.git";
+fi
+if [ ! -d "$GIT_DIR" ]; then
+    stderr ".git location is not a directory: $GIT_DIR";
+    exit 1;
+fi
+GIT="$GIT --work-tree $TARGETDIR --git-dir $GIT_DIR"
+
 # Check if commit message needs any formatting (date splicing)
 if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
     DATE_FMT="" # empty date format (will disable splicing in the main loop)
@@ -189,14 +203,14 @@ cd "$TARGETDIR" # CD into right dir
 
 if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
-        PUSH_CMD="'$GIT' push $REMOTE" # Branch not set, push to remote without a branch
+        PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
     else
         # check if we are on a detached HEAD
-        HEADREF=$(git symbolic-ref HEAD 2> /dev/null)
+        HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null)
         if [ $? -eq 0 ]; then # HEAD is not detached
-            PUSH_CMD="'$GIT' push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+            PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
         else # HEAD is detached
-            PUSH_CMD="'$GIT' push $REMOTE $BRANCH"
+            PUSH_CMD="$GIT push $REMOTE $BRANCH"
         fi
     fi
 else
@@ -257,7 +271,7 @@ eval $INCOMMAND | while read -r line; do
         fi
 
         if [[ "$LISTCHANGES" -ge 0 ]]; then    # allow listing diffs in the commit log message, unless if there are too many lines changed
-            DIFF_COMMITMSG="$(git diff -U0 $LISTCHANGES_COLOR | diff-lines)"
+            DIFF_COMMITMSG="$($GIT diff -U0 $LISTCHANGES_COLOR | diff-lines)"
             LENGTH_DIFF_COMMITMSG=0
             if [[ "$LISTCHANGES" -ge 1 ]]; then
                 LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
@@ -267,21 +281,22 @@ eval $INCOMMAND | while read -r line; do
                 if [ -n "$DIFF_COMMITMSG" ]; then
                     FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
                 else
-                    FORMATTED_COMMITMSG="New files added: $(git status -s)"
+                    FORMATTED_COMMITMSG="New files added: $($GIT status -s)"
                 fi
             else
                 #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
-                FORMATTED_COMMITMSG=$(git diff --stat | grep '|')
+                FORMATTED_COMMITMSG=$($GIT diff --stat | grep '|')
             fi
         fi
 
         cd "$TARGETDIR" # CD into right dir
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
-            "$GIT" add $GIT_ADD_ARGS # add file(s) to index
-            "$GIT" commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+            $GIT add $GIT_ADD_ARGS # add file(s) to index
+            $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
             if [ -n "$PUSH_CMD" ]; then
+                echo "Push command is $PUSH_CMD";
                 eval $PUSH_CMD;
             fi
         fi

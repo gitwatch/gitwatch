@@ -27,7 +27,7 @@ load startup-shutdown
 
     # Wait a bit for inotify to figure out the file has changed, and do its add,
     # commit, and push.
-    sleep 5
+    sleep $WAITTIME
 
     # Verify that push happened
     currentcommit=$(git rev-parse master)
@@ -40,7 +40,7 @@ load startup-shutdown
     cd subdir
     echo "line2" >> file2.txt
 
-    sleep 5
+    sleep $WAITTIME
 
     # Verify that new commit has happened
     currentcommit=$(git rev-parse master)
@@ -54,7 +54,7 @@ load startup-shutdown
 
     # Try removing file to see if can work
     rm file2.txt
-    sleep 5
+    sleep $WAITTIME
 
     # Verify that new commit has happened
     currentcommit=$(git rev-parse master)

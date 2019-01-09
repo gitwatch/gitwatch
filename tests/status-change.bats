@@ -26,11 +26,11 @@ load startup-shutdown
 
     # Wait a bit for inotify to figure out the file has changed, and do its add,
     # and commit
-    sleep 5
+    sleep $WAITTIME
 
     # Touch the file, but no change
     touch file1.txt
-    sleep 5
+    sleep $WAITTIME
 
     run bash -c "grep \"nothing to commit\" \"$testdir/output.txt\" | wc -l"
     [[ $output == "0" ]]

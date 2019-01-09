@@ -25,11 +25,11 @@ load startup-shutdown
 
     # Wait a bit for inotify to figure out the file has changed, and do its add,
     # and commit
-    sleep 5
+    sleep $WAITTIME
 
     # Make a new change
     echo "line2" >> file1.txt
-    sleep 5
+    sleep $WAITTIME
 
     # Check commit log that the diff is in there
     run git log -1 --oneline
