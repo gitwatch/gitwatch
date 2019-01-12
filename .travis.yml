@@ -5,4 +5,4 @@ before_install:
   - sudo apt-get install -qq bats
   - sudo apt-get install inotify-tools
 script:
-  - bats testscript.bats
+  - bats tests
