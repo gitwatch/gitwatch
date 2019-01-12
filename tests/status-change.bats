@@ -32,8 +32,13 @@ load startup-shutdown
     touch file1.txt
     sleep $WAITTIME
 
-    run bash -c "grep \"nothing to commit\" \"$testdir/output.txt\" | wc -l"
-    [[ $output == "0" ]]
+    echo "hi there" > "$testdir/output.txt"
+    cat "$testdir/output.txt"
+    run git log -1 --oneline
+    echo $output
+    #run bash -c "grep \"nothing to commit\" $testdir/output.txt | wc -l"
+    run grep "nothing to commit" $testdir/output.txt
+    [ $status -ne 0 ]
     
 }
 
