@@ -183,15 +183,17 @@ else
     exit 1
 fi
 
-# Verify that $GIT_DIR is appropriately set; add parameters to git command
-if [ -z "$GIT_DIR" ]; then
-    GIT_DIR="$TARGETDIR/.git";
+# If $GIT_DIR is set, verify that it is a directory, and then add parameters to
+# git command as need be
+if [ -n "$GIT_DIR" ]; then
+
+    if [ ! -d "$GIT_DIR" ]; then
+        stderr ".git location is not a directory: $GIT_DIR";
+        exit 1;
+    fi
+
+    GIT="$GIT --work-tree $TARGETDIR --git-dir $GIT_DIR"
 fi
-if [ ! -d "$GIT_DIR" ]; then
-    stderr ".git location is not a directory: $GIT_DIR";
-    exit 1;
-fi
-GIT="$GIT --work-tree $TARGETDIR --git-dir $GIT_DIR"
 
 # Check if commit message needs any formatting (date splicing)
 if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
