@@ -1,8 +1,18 @@
 language: bash
-before_install:
-  - sudo add-apt-repository ppa:duggan/bats --yes
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq bats
-  - sudo apt-get install inotify-tools
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:duggan/bats'
+    packages:
+      - bats
+      - inotify-tools
+  homebrew:
+    packages:
+      - fswatch
+      - coreutils  # in order to get greadlink
+      - bats-core
 script:
   - bats tests

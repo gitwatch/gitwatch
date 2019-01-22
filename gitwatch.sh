@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#fsw!/usr/bin/env bash
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
@@ -42,7 +42,6 @@ DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 LISTCHANGES=-1
 LISTCHANGES_COLOR="--color=always"
-EVENTS="close_write,move,delete,create"
 GIT_DIR=""
 
 # Print a message about how to use this script
@@ -89,6 +88,7 @@ shelp () {
     echo " -e <events>      Events passed to inotifywait to watch (defaults to "
     echo "                  '$EVENTS')"
     echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
+    echo "                  (currently ignored on Mac, which only uses default values)"
     echo ""
     echo "As indicated, several conditions are only checked once at launch of the"
     echo "script. You can make changes to the repo state and configurations even while"
@@ -150,7 +150,23 @@ fi
 
 # if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
-if [ -z "$GW_INW_BIN" ]; then INW="inotifywait"; else INW="$GW_INW_BIN"; fi
+
+if [ -z "$GW_INW_BIN" ]; then
+    # if Mac, use fswatch
+    if [ "$(uname)" != "Darwin" ]; then
+        INW="inotifywait";
+        EVENTS="close_write,move,delete,create";
+    else
+        INW="fswatch";
+        # default events specified via a mask, see
+        # https://emcrisostomo.github.io/fswatch/doc/1.14.0/fswatch.html/Invoking-fswatch.html#Numeric-Event-Flags
+        # default of 414 = MovedTo + MovedFrom + Renamed + Removed + Updated + Created
+        #                = 256 + 128+ 16 + 8 + 4 + 2
+        EVENTS="--event=414"
+    fi;
+else
+    INW="$GW_INW_BIN";
+fi
 
 # Check availability of selected binaries and die if not met
 for cmd in "$GIT" "$INW"; do
@@ -166,16 +182,36 @@ trap "cleanup" EXIT # make sure the timeout is killed when exiting script
 
 
 # Expand the path to the target to absolute path
-IN=$(readlink -f "$1")
+if [ "$(uname)" != "Darwin" ]; then
+    IN=$(readlink -f "$1")
+else
+    IN=$(greadlink -f "$1")
+fi;
 
+    
 if [ -d "$1" ]; then # if the target is a directory
+
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
-    INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\"" # construct inotifywait-commandline
+    # construct inotifywait-commandline
+    if [ "$(uname)" != "Darwin" ]; then
+        INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+    else
+        # still need to fix EVENTS since it wants them listed one-by-one
+        INCOMMAND="\"$INW\" --recursive \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+    fi;
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
+
 elif [ -f "$1" ]; then # if the target is a single file
+
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
-    INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\"" # construct inotifywait-commandline
+    # construct inotifywait-commandline
+    if [ "$(uname)" != "Darwin" ]; then
+        INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\""
+    else
+        INCOMMAND="\"$INW\" \"$EVENTS\" \"$IN\""
+    fi;
+
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else

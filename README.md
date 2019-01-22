@@ -18,7 +18,7 @@ do that for you if `/usr/local/bin` is in your `$PATH`. You may need to
 invoke `install` with `sudo`.
 
 ```sh
-$ git clone https://github.com/nevik/gitwatch.git
+$ git clone https://github.com/gitwatch/gitwatch.git
 $ cd gitwatch
 $ [sudo] install -b gitwatch.sh /usr/local/bin/gitwatch
 ```
@@ -30,13 +30,22 @@ running the command below. You may need to invoke `bpkg` with `sudo`
 when using the `-g` flag.
 
 ```sh
-$ [sudo] bpkg install -g nevik/gitwatch
+$ [sudo] bpkg install -g gitwatch/gitwatch
 ```
 
 ## Requirements
 To run this script, you must have installed and globally available:
 * `git` ( [git/git](https://github.com/git/git) | http://www.git-scm.com )
 * `inotifywait` (part of **inotify-tools**: [rvoicilas/inotify-tools](https://github.com/rvoicilas/inotify-tools) )
+
+### Notes for Mac
+If running on OS X, you'll need to install the following Homebrew tools:
+
+```sh
+$ brew install fswatch
+$ brew install coreutils
+```
+
 
 ## What it does
 When you start the script, it prepares some variables and checks if the file [a] or directory [b] given as input really exists.<br />
@@ -80,4 +89,4 @@ Note that this method assumes you have Gitwatch installed in `/opt/gitwatch`
 ## Other Articles
 
 ### On the Gitwatch Wiki
-* [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/nevik/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
+* [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/gitwatch/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
