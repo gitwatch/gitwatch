@@ -1,6 +1,6 @@
 language: bash
 os:
-#  - linux
+  - linux
   - osx
 addons:
   apt:
