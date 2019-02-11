@@ -77,10 +77,10 @@ shelp () {
     echo "                  if no remote was defined with -r, this option has no effect"
     echo " -g <path>        Location of the .git directory, if stored elsewhere in"
     echo "                  a remote location. This specifies the --git-dir parameter"
-    echo " -l <lines>       Log the actual changes made in this commit, upto a given"
+    echo " -l <lines>       Log the actual changes made in this commit, up to a given"
     echo "                  number of lines, or all lines if 0 is given"
     echo " -L <lines>       Same as -l but without colored formatting"
-    echo " -m <msg>         The commit message used for each commit; all occurences of"
+    echo " -m <msg>         The commit message used for each commit; all occurrences of"
     echo "                  %d in the string will be replaced by the formatted date/time"
     echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
     echo "                  is replaced by an empty string); the default message is:"
@@ -94,7 +94,7 @@ shelp () {
     echo "script. You can make changes to the repo state and configurations even while"
     echo "the script is running, but that may lead to undefined and unpredictable (even"
     echo "destructive) behavior!"
-    echo "It is therefore recommended to terminate the script before changin the repo's"
+    echo "It is therefore recommended to terminate the script before changing the repo's"
     echo "config and restarting it afterwards."
     echo ""
     echo "By default, gitwatch tries to use the binaries \"git\" and \"inotifywait\","
@@ -232,7 +232,7 @@ if [ -n "$GIT_DIR" ]; then
 fi
 
 # Check if commit message needs any formatting (date splicing)
-if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didnt contain %d, grep returns non-zero
+if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didn't contain %d, grep returns non-zero
     DATE_FMT="" # empty date format (will disable splicing in the main loop)
     FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
 fi
