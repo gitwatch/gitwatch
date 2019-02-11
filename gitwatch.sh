@@ -125,9 +125,9 @@ is_command () {
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:p:r:s:e: option # Process command line options 
-do 
-    case "${option}" in 
+while getopts b:d:h:g:L:l:m:p:r:s:e: option # Process command line options
+do
+    case "${option}" in
         b) BRANCH=${OPTARG};;
         d) DATE_FMT=${OPTARG};;
         h) shelp; exit;;
@@ -188,7 +188,7 @@ else
     IN=$(greadlink -f "$1")
 fi;
 
-    
+
 if [ -d "$1" ]; then # if the target is a directory
 
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
@@ -292,7 +292,7 @@ diff-lines() {
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-eval $INCOMMAND | while read -r line; do 
+eval $INCOMMAND | while read -r line; do
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         # kill it and wait for completion
