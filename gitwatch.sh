@@ -112,15 +112,15 @@ stderr () {
 
 # clean up at end of program, killing the remaining sleep process if it still exists
 cleanup () {
-    if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
-        kill $SLEEP_PID &>/dev/null
+    if [[ -n "$SLEEP_PID" ]] && kill -0 "$SLEEP_PID" &>/dev/null; then
+        kill "$SLEEP_PID" &>/dev/null
     fi
     exit 0
 }
 
 # Tests for the availability of a command
 is_command () {
-	which "$1" &>/dev/null
+    command -v "$1" &>/dev/null
 }
 
 ###############################################################################
@@ -244,8 +244,7 @@ if [ -n "$REMOTE" ]; then # are we pushing to a remote?
         PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
     else
         # check if we are on a detached HEAD
-        HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null)
-        if [ $? -eq 0 ]; then # HEAD is not detached
+        if HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null); then # HEAD is not detached
             PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
         else # HEAD is detached
             PUSH_CMD="$GIT push $REMOTE $BRANCH"
@@ -302,7 +301,7 @@ eval $INCOMMAND | while read -r line; do
 
     # start timeout process
     (
-        sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
+        sleep "$SLEEP_TIME" # wait some more seconds to give apps time to write out all changes
 
         if [ -n "$DATE_FMT" ]; then
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
