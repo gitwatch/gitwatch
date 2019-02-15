@@ -138,6 +138,7 @@ do
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
         e) EVENTS=${OPTARG};;
+        *) stderr "Error: Option '${option}' is not exist."; shelp; exit 1;;
     esac
 done
 
