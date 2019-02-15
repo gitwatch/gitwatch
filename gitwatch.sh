@@ -194,10 +194,10 @@ if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     # construct inotifywait-commandline
     if [ "$(uname)" != "Darwin" ]; then
-        INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+        INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
     else
         # still need to fix EVENTS since it wants them listed one-by-one
-        INCOMMAND="\"$INW\" --recursive \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+        INW_ARGS=("--recursive" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
     fi;
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
@@ -207,10 +207,10 @@ elif [ -f "$1" ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     # construct inotifywait-commandline
     if [ "$(uname)" != "Darwin" ]; then
-        INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\""
+        INW_ARGS=("-qm" "-e" "$EVENTS" "$IN")
     else
-        INCOMMAND="\"$INW\" \"$EVENTS\" \"$IN\""
-    fi;
+        INW_ARGS=("$EVENTS" "$IN")
+    fi
 
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
@@ -291,7 +291,7 @@ diff-lines() {
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-eval $INCOMMAND | while read -r line; do
+eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         # kill it and wait for completion
