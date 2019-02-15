@@ -237,7 +237,8 @@ if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didn't contain 
     FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
 fi
 
-cd "$TARGETDIR" # CD into right dir
+# CD into right dir
+cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
 
 if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
@@ -326,7 +327,8 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
             fi
         fi
 
-        cd "$TARGETDIR" # CD into right dir
+        # CD into right dir
+        cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
             $GIT add $GIT_ADD_ARGS # add file(s) to index
