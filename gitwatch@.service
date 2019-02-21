@@ -2,5 +2,8 @@
 Description=Watch file or directory and git commit all changes
 
 [Service]
-ExecStart=/opt/gitwatch/gitwatch.sh %I
+ExecStart=/usr/local/bin/gitwatch "%I"
 ExecStop=/bin/true
+
+[Install]
+WantedBy=multi-user.target
