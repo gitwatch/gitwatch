@@ -22,6 +22,9 @@ $ git clone https://github.com/gitwatch/gitwatch.git
 $ cd gitwatch
 $ [sudo] install -b gitwatch.sh /usr/local/bin/gitwatch
 ```
+#### Update
+
+If you installed `gitwatch` from source, you can update it by following the exact same steps (or `git pull` rather than clone if you kept the repository around).
 
 ### bpkg
 `gitwatch` can be installed with [bpkg](https://github.com/bpkg/bpkg). Make
