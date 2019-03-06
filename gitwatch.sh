@@ -1,4 +1,4 @@
-#fsw!/usr/bin/env bash
+#/usr/bin/env bash
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
