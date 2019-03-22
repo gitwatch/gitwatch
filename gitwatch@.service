@@ -1,9 +1,10 @@
 [Unit]
-Description=Watch file or directory and git commit all changes
+Description=Watch file or directory and git commit all changes. run with: systemctl --user --now enable gitwatch@$(systemd-escape "'-r url/to/repository' /path/to/folder").service
 
 [Service]
-ExecStart=/usr/local/bin/gitwatch "%I"
+Environment="SCRIPT_ARGS=%I"
+ExecStart=/usr/bin/gitwatch $SCRIPT_ARGS
 ExecStop=/bin/true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
