@@ -84,9 +84,9 @@ The `<username>` bit should be replaced with your username or that of any other 
 
 #### systemd
 
-- If installed to a path other than `/usr/local/bin/gitwatch`, modify `gitwatch@.service` to suit
+- If installed to a path other than `/usr/bin/gitwatch`, modify `gitwatch@.service` to suit
 - Create dir if it does not exist and copy systemd service file with `mkdir -p "$HOME/.config/systemd/user" && cp gitwatch@.service $HOME/.config/systemd/user`
-- Start and enable the service for a given path by running `systemctl --user --now enable gitwatch@$(systemd-escape "/path/to/folder/to/monitor").service`
+- Start and enable the service for a given path by running `systemctl --user --now enable gitwatch@$(systemd-escape "'-r url/to/repository' /path/to/folder").service`
 
 ## Other Articles
 ### On the Gitwatch Wiki
