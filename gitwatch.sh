@@ -120,7 +120,7 @@ cleanup () {
 
 # Tests for the availability of a command
 is_command () {
-	which "$1" &>/dev/null
+	hash "$1" 2>/dev/null
 }
 
 ###############################################################################
