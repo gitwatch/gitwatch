@@ -185,7 +185,15 @@ trap "cleanup" EXIT # make sure the timeout is killed when exiting script
 if [ "$(uname)" != "Darwin" ]; then
     IN=$(readlink -f "$1")
 else
-    IN=$(greadlink -f "$1")
+    if is_command "greadlink"; then
+      IN=$(greadlink -f "$1")
+    else
+      IN=$(readlink -f "$1")
+      if [ $? -eq 1 ]; then
+        echo "Seems like your readlink doesn't support '-f'. Running without. Please 'brew install coreutils'."
+        IN=$(readlink "$1")
+      fi
+    fi;
 fi;
 
 
