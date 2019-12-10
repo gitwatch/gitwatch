@@ -14,5 +14,6 @@ addons:
       - fswatch
       - coreutils  # in order to get greadlink
       - bats-core
+    update: true
 script:
   - bats tests
