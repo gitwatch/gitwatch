@@ -112,8 +112,8 @@ stderr () {
 
 # clean up at end of program, killing the remaining sleep process if it still exists
 cleanup () {
-    if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
-        kill $SLEEP_PID &>/dev/null
+    if [[ -n "$SLEEP_PID" ]] && kill -0 "$SLEEP_PID" &>/dev/null; then
+        kill "$SLEEP_PID" &>/dev/null
     fi
     exit 0
 }
@@ -138,6 +138,7 @@ do
         p|r) REMOTE=${OPTARG};;
         s) SLEEP_TIME=${OPTARG};;
         e) EVENTS=${OPTARG};;
+        *) stderr "Error: Option '${option}' does not exist."; shelp; exit 1;;
     esac
 done
 
@@ -202,10 +203,10 @@ if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     # construct inotifywait-commandline
     if [ "$(uname)" != "Darwin" ]; then
-        INCOMMAND="\"$INW\" -qmr -e \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+        INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
     else
         # still need to fix EVENTS since it wants them listed one-by-one
-        INCOMMAND="\"$INW\" --recursive \"$EVENTS\" --exclude \"\.git\" \"$TARGETDIR\""
+        INW_ARGS=("--recursive" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
     fi;
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
@@ -215,10 +216,10 @@ elif [ -f "$1" ]; then # if the target is a single file
     TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
     # construct inotifywait-commandline
     if [ "$(uname)" != "Darwin" ]; then
-        INCOMMAND="\"$INW\" -qm -e \"$EVENTS\" \"$IN\""
+        INW_ARGS=("-qm" "-e" "$EVENTS" "$IN")
     else
-        INCOMMAND="\"$INW\" \"$EVENTS\" \"$IN\""
-    fi;
+        INW_ARGS=("$EVENTS" "$IN")
+    fi
 
     GIT_ADD_ARGS="$IN" # add only the selected file to index
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
@@ -245,15 +246,15 @@ if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didn't contain 
     FORMATTED_COMMITMSG="$COMMITMSG" # save (unchanging) commit message
 fi
 
-cd "$TARGETDIR" # CD into right dir
+# CD into right dir
+cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
 
 if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
         PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
     else
         # check if we are on a detached HEAD
-        HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null)
-        if [ $? -eq 0 ]; then # HEAD is not detached
+        if HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null); then # HEAD is not detached
             PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
         else # HEAD is detached
             PUSH_CMD="$GIT push $REMOTE $BRANCH"
@@ -300,7 +301,7 @@ diff-lines() {
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-eval $INCOMMAND | while read -r line; do
+eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     # is there already a timeout process running?
     if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
         # kill it and wait for completion
@@ -310,7 +311,7 @@ eval $INCOMMAND | while read -r line; do
 
     # start timeout process
     (
-        sleep $SLEEP_TIME # wait some more seconds to give apps time to write out all changes
+        sleep "$SLEEP_TIME" # wait some more seconds to give apps time to write out all changes
 
         if [ -n "$DATE_FMT" ]; then
             FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
@@ -335,7 +336,8 @@ eval $INCOMMAND | while read -r line; do
             fi
         fi
 
-        cd "$TARGETDIR" # CD into right dir
+        # CD into right dir
+        cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
             $GIT add $GIT_ADD_ARGS # add file(s) to index
