@@ -3,7 +3,7 @@ Description=Watch file or directory and git commit all changes. run with: system
 
 [Service]
 Environment="SCRIPT_ARGS=%I"
-ExecStart=/usr/bin/gitwatch $SCRIPT_ARGS
+ExecStart=/usr/local/bin/gitwatch $SCRIPT_ARGS
 ExecStop=/bin/true
 
 [Install]
