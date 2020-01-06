@@ -65,7 +65,7 @@ Notes:
 * currently, folders are always watched recursively
 
 ## Usage
-`gitwatch.sh <file or directory to watch> [-r <remote> [-b <branch>]]`<br />
+`gitwatch.sh [-r <remote> [-b <branch>]] <file or directory to watch>`<br />
 It is expected that the watched file/directory are already in a git repository (the script will not create a repository). If a folder is being watched, this will be watched fully recursively; this also means that all files and sub-folders added and removed from the directory will always be added and removed in the next commit. The `.git` folder will be excluded from the `inotifywait` call so changes to it will not cause unnecessary triggering of the script.
 
 ### Starting on Boot
