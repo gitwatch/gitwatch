@@ -38,6 +38,7 @@
 REMOTE=""
 BRANCH=""
 SLEEP_TIME=2
+EVENTS="close_write,move,delete,create"
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 LISTCHANGES=-1
@@ -156,7 +157,6 @@ if [ -z "$GW_INW_BIN" ]; then
     # if Mac, use fswatch
     if [ "$(uname)" != "Darwin" ]; then
         INW="inotifywait";
-        EVENTS="close_write,move,delete,create";
     else
         INW="fswatch";
         # default events specified via a mask, see
