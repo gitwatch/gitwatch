@@ -38,7 +38,6 @@
 REMOTE=""
 BRANCH=""
 SLEEP_TIME=2
-EVENTS="close_write,move,delete,create"
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 LISTCHANGES=-1
@@ -157,13 +156,14 @@ if [ -z "$GW_INW_BIN" ]; then
     # if Mac, use fswatch
     if [ "$(uname)" != "Darwin" ]; then
         INW="inotifywait";
+        EVENTS="${EVENTS:-close_write,move,delete,create}"
     else
         INW="fswatch";
         # default events specified via a mask, see
         # https://emcrisostomo.github.io/fswatch/doc/1.14.0/fswatch.html/Invoking-fswatch.html#Numeric-Event-Flags
         # default of 414 = MovedTo + MovedFrom + Renamed + Removed + Updated + Created
         #                = 256 + 128+ 16 + 8 + 4 + 2
-        EVENTS="--event=414"
+        EVENTS="${EVENTS:---event=414}"
     fi;
 else
     INW="$GW_INW_BIN";
