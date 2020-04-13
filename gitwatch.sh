@@ -203,10 +203,10 @@ if [ -d "$1" ]; then # if the target is a directory
     TARGETDIR=$(sed -e "s/\/*$//" <<<"$IN") # dir to CD into before using git commands: trim trailing slash, if any
     # construct inotifywait-commandline
     if [ "$(uname)" != "Darwin" ]; then
-        INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
+        INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "'/.*/(\.git/|\.git$)'" "$TARGETDIR")
     else
         # still need to fix EVENTS since it wants them listed one-by-one
-        INW_ARGS=("--recursive" "$EVENTS" "--exclude" "\.git" "$TARGETDIR")
+        INW_ARGS=("--recursive" "$EVENTS" "--exclude" "'/.*/(\.git/|\.git$)'" "$TARGETDIR")
     fi;
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
