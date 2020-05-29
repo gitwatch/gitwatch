@@ -156,7 +156,7 @@ if [ -z "$GW_INW_BIN" ]; then
     # if Mac, use fswatch
     if [ "$(uname)" != "Darwin" ]; then
         INW="inotifywait";
-        EVENTS="${EVENTS:-close_write,move,move_self,delete,create}"
+        EVENTS="${EVENTS:-close_write,move,move_self,delete,create,modify}"
     else
         INW="fswatch";
         # default events specified via a mask, see
