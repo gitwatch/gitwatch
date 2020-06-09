@@ -237,7 +237,7 @@ if [ -n "$GIT_DIR" ]; then
         exit 1;
     fi
 
-    GIT="$GIT --work-tree $TARGETDIR --git-dir $GIT_DIR"
+    GIT="$GIT --no-pager --work-tree $TARGETDIR --git-dir $GIT_DIR"
 fi
 
 # Check if commit message needs any formatting (date splicing)
