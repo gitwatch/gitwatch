@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.github.gitwatch</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/gitwatch.sh</string>
+      <string>-s</string>
+      <string>60</string>
+      <string>-m</string>
+      <string>Auto-commit %d</string>
+      <string>/path/to/watch</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>GW_GIT_BIN</key>
+      <string>/usr/local/bin/git</string>
+      <key>GW_INW_BIN</key>
+      <string>/usr/local/bin/fswatch</string>
+      <key>GW_RL_BIN</key>
+      <string>/usr/local/bin/greadlink</string>
+    </dict>
+ <!-- remove comment to log output from gitwatch
+    <key>StandardOutPath</key>
+    <string>/tmp/gitwatch.out.txt</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/gitwatch.err.txt</string>
+ -->
+  </dict>
+</plist>
