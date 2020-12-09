@@ -1,0 +1,19 @@
+language: bash
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    sources:
+      - sourceline: 'ppa:duggan/bats'
+    packages:
+      - bats
+      - inotify-tools
+  homebrew:
+    packages:
+      - fswatch
+      - coreutils  # in order to get greadlink
+      - bats-core
+    update: true
+script:
+  - bats tests
