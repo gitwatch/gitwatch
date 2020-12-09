@@ -1,0 +1,31 @@
+name: Execution tests
+on: [push]
+
+jobs:
+  gitwatch-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+    timeout-minutes: 3
+    steps:
+      - name: Install tools
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get -y install inotify-tools
+            sudo apt-get -y install bats
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            brew install fswatch
+            brew install coreutils   # in order to get readlink
+          else
+            echo "Unsupported OS: $RUNNER_OS"
+            exit 1
+          fi
+        shell: bash
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Run the tests
+        run: |
+          git config --global user.email "test@email.com"
+          git config --global user.name "test user"
+          bats tests
