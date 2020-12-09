@@ -17,7 +17,6 @@ jobs:
           elif [ "$RUNNER_OS" == "macOS" ]; then
             brew install fswatch
             brew install coreutils   # in order to get readlink
-            brew install bats-core
           else
             echo "Unsupported OS: $RUNNER_OS"
             exit 1
