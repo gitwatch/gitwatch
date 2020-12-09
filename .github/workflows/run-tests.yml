@@ -14,7 +14,7 @@ jobs:
           if [ "$RUNNER_OS" == "Linux" ]; then
             sudo apt-get -y install inotify-tools
             sudo apt-get -y install bats
-          elif [ "$RUNNER_OS" == "MacOS" ]; then
+          elif [ "$RUNNER_OS" == "macOS" ]; then
             brew install fswatch
             brew install coreutils   # in order to get readlink
             brew install bats-core
