@@ -97,12 +97,12 @@ shelp () {
     echo "It is therefore recommended to terminate the script before changing the repo's"
     echo "config and restarting it afterwards."
     echo ""
-    echo "By default, gitwatch tries to use the binaries \"git\" and \"inotifywait\","
-    echo "expecting to find them in the PATH (it uses 'which' to check this and  will"
-    echo "abort with an error if they cannot be found). If you want to use binaries"
-    echo "that are named differently and/or located outside of your PATH, you can define"
-    echo "replacements in the environment variables GW_GIT_BIN and GW_INW_BIN for git"
-    echo "and inotifywait, respectively."
+    echo "By default, gitwatch tries to use the binaries \"git\", \"inotifywait\", and"
+    echo "\"readline\", expecting to find them in the PATH (it uses 'which' to check this"
+    echo "and will abort with an error if they cannot be found). If you want to use"
+    echo "binaries that are named differently and/or located outside of your PATH, you can"
+    echo "define replacements in the environment variables GW_GIT_BIN, GW_INW_BIN, and"
+    echo "GW_RL_BIN for git, inotifywait, and readline, respectively."
 }
 
 # print all arguments to stderr
@@ -149,7 +149,7 @@ if [ $# -ne 1 ]; then # If no command line arguments are left (that's bad: no ta
     exit # and exit
 fi
 
-# if custom bin names are given for git or inotifywait, use those; otherwise fall back to "git" and "inotifywait"
+# if custom bin names are given for git, inotifywait, or readlink, use those; otherwise fall back to "git", "inotifywait", and "readlink"
 if [ -z "$GW_GIT_BIN" ]; then GIT="git"; else GIT="$GW_GIT_BIN"; fi
 
 if [ -z "$GW_INW_BIN" ]; then
@@ -169,9 +169,11 @@ else
     INW="$GW_INW_BIN";
 fi
 
+if [ -z "$GW_RL_BIN" ]; then RL="readlink"; else RL="$GW_RL_BIN"; fi
+
 # Check availability of selected binaries and die if not met
 for cmd in "$GIT" "$INW"; do
-	is_command "$cmd" || { stderr "Error: Required command '$cmd' not found." ; exit 1; }
+	is_command "$cmd" || { stderr "Error: Required command '$cmd' not found." ; exit 2; }
 done
 unset cmd
 
@@ -184,15 +186,15 @@ trap "cleanup" EXIT # make sure the timeout is killed when exiting script
 
 # Expand the path to the target to absolute path
 if [ "$(uname)" != "Darwin" ]; then
-    IN=$(readlink -f "$1")
+    IN=$($RL -f "$1")
 else
     if is_command "greadlink"; then
       IN=$(greadlink -f "$1")
     else
-      IN=$(readlink -f "$1")
+      IN=$($RL -f "$1")
       if [ $? -eq 1 ]; then
         echo "Seems like your readlink doesn't support '-f'. Running without. Please 'brew install coreutils'."
-        IN=$(readlink "$1")
+        IN=$($RL "$1")
       fi
     fi;
 fi;
@@ -206,7 +208,7 @@ if [ -d "$1" ]; then # if the target is a directory
         INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "'(\.git/|\.git$)'" "\"$TARGETDIR\"")
     else
         # still need to fix EVENTS since it wants them listed one-by-one
-        INW_ARGS=("--recursive" "$EVENTS" "--exclude" "'(\.git/|\.git$)'" "\"$TARGETDIR\"")
+        INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" "'(\.git/|\.git$)'" "\"$TARGETDIR\"")
     fi;
     GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
     GIT_COMMIT_ARGS="" # add -a switch to "commit" call just to be sure
@@ -225,7 +227,7 @@ elif [ -f "$1" ]; then # if the target is a single file
     GIT_COMMIT_ARGS="" # no need to add anything more to "commit" call
 else
     stderr "Error: The target is neither a regular file nor a directory."
-    exit 1
+    exit 3
 fi
 
 # If $GIT_DIR is set, verify that it is a directory, and then add parameters to
@@ -234,7 +236,7 @@ if [ -n "$GIT_DIR" ]; then
 
     if [ ! -d "$GIT_DIR" ]; then
         stderr ".git location is not a directory: $GIT_DIR";
-        exit 1;
+        exit 4;
     fi
 
     GIT="$GIT --no-pager --work-tree $TARGETDIR --git-dir $GIT_DIR"
@@ -247,7 +249,7 @@ if ! grep "%d" > /dev/null <<< "$COMMITMSG"; then # if commitmsg didn't contain 
 fi
 
 # CD into right dir
-cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
+cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 5; }
 
 if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     if [ -z "$BRANCH" ]; then # Do we have a branch set to push to ?
@@ -337,7 +339,7 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
         fi
 
         # CD into right dir
-        cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 1; }
+        cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 6; }
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
             $GIT add $GIT_ADD_ARGS # add file(s) to index
