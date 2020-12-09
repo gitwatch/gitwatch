@@ -1,0 +1,18 @@
+name: Execution tests
+on: [push]
+
+defaults:
+  run:
+    shell: bash
+jobs:
+  gitwatch-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install Guile
+        run: |
+          sudo apt-get -y install bats
+      - name: Run the tests
+        run: |
+          bats tests
