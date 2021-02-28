@@ -344,8 +344,11 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
         cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 6; }
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
-            $GIT add "$GIT_ADD_ARGS" # add file(s) to index
-            $GIT commit "$GIT_COMMIT_ARGS" -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+            # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word splitted
+            # shellcheck disable=SC2086
+            $GIT add $GIT_ADD_ARGS # add file(s) to index
+            # shellcheck disable=SC2086
+            $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
             if [ -n "$PUSH_CMD" ]; then
                 echo "Push command is $PUSH_CMD";
