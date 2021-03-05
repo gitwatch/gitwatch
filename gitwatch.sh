@@ -107,7 +107,7 @@ shelp () {
 
 # print all arguments to stderr
 stderr () {
-    echo $@ >&2
+    echo "$@" >&2
 }
 
 # clean up at end of program, killing the remaining sleep process if it still exists
@@ -257,7 +257,8 @@ if [ -n "$REMOTE" ]; then # are we pushing to a remote?
     else
         # check if we are on a detached HEAD
         if HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null); then # HEAD is not detached
-            PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+            #PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
+            PUSH_CMD="$GIT push $REMOTE ${HEADREF#refs/heads/}:$BRANCH"
         else # HEAD is detached
             PUSH_CMD="$GIT push $REMOTE $BRANCH"
         fi
@@ -272,7 +273,7 @@ diff-lines() {
     local path=
     local line=
     local previous_path=
-    while read; do
+    while read -r; do
         esc=$'\033'
         if [[ $REPLY =~ ---\ (a/)?([^[:blank:]$esc]+).* ]]; then
             previous_path=${BASH_REMATCH[2]}
@@ -305,10 +306,10 @@ diff-lines() {
 #   have been no changes reported during a whole timeout period
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     # is there already a timeout process running?
-    if [[ -n "$SLEEP_PID" ]] && kill -0 $SLEEP_PID &>/dev/null; then
+    if [[ -n "$SLEEP_PID" ]] && kill -0 "$SLEEP_PID" &>/dev/null; then
         # kill it and wait for completion
-        kill $SLEEP_PID &>/dev/null || true
-        wait $SLEEP_PID &>/dev/null || true
+        kill "$SLEEP_PID" &>/dev/null || true
+        wait "$SLEEP_PID" &>/dev/null || true
     fi
 
     # start timeout process
@@ -316,11 +317,12 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
         sleep "$SLEEP_TIME" # wait some more seconds to give apps time to write out all changes
 
         if [ -n "$DATE_FMT" ]; then
-            FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
+            #FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
+            FORMATTED_COMMITMSG="${COMMITMSG/\%d/$(date "$DATE_FMT")}" # splice the formatted date-time into the commit message
         fi
 
         if [[ "$LISTCHANGES" -ge 0 ]]; then    # allow listing diffs in the commit log message, unless if there are too many lines changed
-            DIFF_COMMITMSG="$($GIT diff -U0 $LISTCHANGES_COLOR | diff-lines)"
+            DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
             LENGTH_DIFF_COMMITMSG=0
             if [[ "$LISTCHANGES" -ge 1 ]]; then
                 LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
@@ -342,12 +344,15 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
         cd "$TARGETDIR" || { stderr "Error: Can't change directory to '${TARGETDIR}'." ; exit 6; }
         STATUS=$($GIT status -s)
         if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
+            # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word splitted
+            # shellcheck disable=SC2086
             $GIT add $GIT_ADD_ARGS # add file(s) to index
+            # shellcheck disable=SC2086
             $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
 
             if [ -n "$PUSH_CMD" ]; then
                 echo "Push command is $PUSH_CMD";
-                eval $PUSH_CMD;
+                eval "$PUSH_CMD";
             fi
         fi
     ) & # and send into background
