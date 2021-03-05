@@ -1,5 +1,5 @@
 name: Execution tests
-on: [push]
+on: [push, pull_request]
 
 jobs:
   gitwatch-tests:
