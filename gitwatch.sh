@@ -61,7 +61,7 @@ shelp() {
   echo "                  write actions of the same batch to finish; default is 2sec"
   echo " -d <fmt>         The format string used for the timestamp in the commit"
   echo "                  message; see 'man date' for details; default is "
-  echo "                  \"+%Y-%m-%d %H:%M:%S\""
+  echo '                  "+%Y-%m-%d %H:%M:%S"'
   echo " -r <remote>      If given and non-empty, a 'git push' to the given <remote>"
   echo "                  is done after every commit; default is empty, i.e. no push"
   echo " -b <branch>      The branch which should be pushed automatically;"
@@ -84,7 +84,7 @@ shelp() {
   echo "                  %d in the string will be replaced by the formatted date/time"
   echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
   echo "                  is replaced by an empty string); the default message is:"
-  echo "                  \"Scripted auto-commit on change (%d) by gitwatch.sh\""
+  echo '                  "Scripted auto-commit on change (%d) by gitwatch.sh"'
   echo " -e <events>      Events passed to inotifywait to watch (defaults to "
   echo "                  '$EVENTS')"
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
@@ -97,7 +97,7 @@ shelp() {
   echo "It is therefore recommended to terminate the script before changing the repo's"
   echo "config and restarting it afterwards."
   echo ""
-  echo "By default, gitwatch tries to use the binaries \"git\", \"inotifywait\", and"
+  echo 'By default, gitwatch tries to use the binaries "git", "inotifywait", and'
   echo "\"readline\", expecting to find them in the PATH (it uses 'which' to check this"
   echo "and will abort with an error if they cannot be found). If you want to use"
   echo "binaries that are named differently and/or located outside of your PATH, you can"
@@ -112,7 +112,7 @@ stderr() {
 
 # clean up at end of program, killing the remaining sleep process if it still exists
 cleanup() {
-  if [[ -n "$SLEEP_PID" ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
+  if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
     kill "$SLEEP_PID" &> /dev/null
   fi
   exit 0
@@ -297,7 +297,7 @@ diff-lines() {
       line=${BASH_REMATCH[2]}
     elif [[ $REPLY =~ ^($esc\[[0-9;]+m)*([\ +-]) ]]; then
       REPLY=${REPLY:0:150} # limit the line width, so it fits in a single line in most git log outputs
-      if [[ "$path" == "/dev/null" ]]; then
+      if [[ $path == "/dev/null" ]]; then
         echo "File $previous_path deleted or moved."
         continue
       else
@@ -319,7 +319,7 @@ diff-lines() {
 #   have been no changes reported during a whole timeout period
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   # is there already a timeout process running?
-  if [[ -n "$SLEEP_PID" ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
+  if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
     # kill it and wait for completion
     kill "$SLEEP_PID" &> /dev/null || true
     wait "$SLEEP_PID" &> /dev/null || true
@@ -334,13 +334,13 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
       FORMATTED_COMMITMSG="${COMMITMSG/\%d/$(date "$DATE_FMT")}" # splice the formatted date-time into the commit message
     fi
 
-    if [[ "$LISTCHANGES" -ge 0 ]]; then # allow listing diffs in the commit log message, unless if there are too many lines changed
+    if [[ $LISTCHANGES -ge 0 ]]; then # allow listing diffs in the commit log message, unless if there are too many lines changed
       DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
       LENGTH_DIFF_COMMITMSG=0
-      if [[ "$LISTCHANGES" -ge 1 ]]; then
+      if [[ $LISTCHANGES -ge 1 ]]; then
         LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
       fi
-      if [[ "$LENGTH_DIFF_COMMITMSG" -le $LISTCHANGES ]]; then
+      if [[ $LENGTH_DIFF_COMMITMSG -le $LISTCHANGES ]]; then
         # Use git diff as the commit msg, unless if files were added or deleted but not modified
         if [ -n "$DIFF_COMMITMSG" ]; then
           FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
