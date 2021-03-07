@@ -32,9 +32,9 @@ for you if `/usr/local/bin` is in your `$PATH`. You may need to invoke
 `install` with `sudo`.
 
 ```sh
-$ git clone https://github.com/gitwatch/gitwatch.git
-$ cd gitwatch
-$ [sudo] install -b gitwatch.sh /usr/local/bin/gitwatch
+git clone https://github.com/gitwatch/gitwatch.git
+cd gitwatch
+[sudo] install -b gitwatch.sh /usr/local/bin/gitwatch
 ```
 
 #### Update
@@ -51,7 +51,7 @@ the command below. You may need to invoke `bpkg` with `sudo` when using the
 `-g` flag.
 
 ```sh
-$ [sudo] bpkg install -g gitwatch/gitwatch
+[sudo] bpkg install -g gitwatch/gitwatch
 ```
 
 ### Archlinux
@@ -63,16 +63,16 @@ for Archlinux. Install it with you favorite aur helper.
 
 To run this script, you must have installed and globally available:
 
-* `git` ( [git/git](https://github.com/git/git) | http://www.git-scm.com )
-* `inotifywait` (part of **inotify-tools**: [rvoicilas/inotify-tools](https://github.com/rvoicilas/inotify-tools) )
+* `git` ([git/git](https://github.com/git/git) | [git-scm](http://www.git-scm.com))
+* `inotifywait` (part of **[inotify-tools](https://github.com/rvoicilas/inotify-tools)**)
 
 ### Notes for Mac
 
 If running on OS X, you'll need to install the following Homebrew tools:
 
 ```sh
-$ brew install fswatch
-$ brew install coreutils
+brew install fswatch
+brew install coreutils
 ```
 
 ## What it does
@@ -95,6 +95,7 @@ forcefully stopped/killed), which will:
   branch can be selected with `-b`)
 
 Notes:
+
 * the waiting period of 2 sec is added to allow for several changes to be
   written out completely before committing; depending on how fast the script
   is executed, this might otherwise cause race conditions when watching
@@ -104,6 +105,7 @@ Notes:
 ## Usage
 
 `gitwatch.sh [-r <remote> [-b <branch>]] <file or directory to watch>`<br />
+
 It is expected that the watched file/directory are already in a git repository
 (the script will not create a repository). If a folder is being watched, this
 will be watched fully recursively; this also means that all files and
@@ -113,7 +115,7 @@ removed in the next commit. The `.git` folder will be excluded from the
 the script.
 
 If you have any large files in your repository that are changing frequently,
-you might wish to ignore them with a `.gitignore` file. 
+you might wish to ignore them with a `.gitignore` file.
 
 ### Starting on Boot
 
@@ -135,7 +137,9 @@ the +x bit, will be executed upon startup, **by the root user account**. If
 you want to start `gitwatch` from `rc.local`, the recommended way to call it
 is:
 
+<!-- markdownlint-disable -->
 `su -c "/absolute/path/to/script/gitwatch.sh /absolute/path/to/watched/file/or/folder" -l <username> &`
+<!-- markdownlint-restore -->
 
 The `<username>` bit should be replaced with your username or that of any
 other (non-root) user account; it only needs write-access to the git
@@ -146,15 +150,17 @@ have other calls in `rc.local` after the mentioned line, because the
 
 #### systemd
 
-- If installed to a path other than `/usr/bin/gitwatch`, modify
+* If installed to a path other than `/usr/bin/gitwatch`, modify
   `gitwatch@.service` to suit
-- Create dir if it does not exist and copy systemd service file with `mkdir -p
+* Create dir if it does not exist and copy systemd service file with `mkdir -p
   "$HOME/.config/systemd/user" && cp gitwatch@.service
   $HOME/.config/systemd/user`
-- Start and enable the service for a given path by running `systemctl --user
+* Start and enable the service for a given path by running `systemctl --user
   --now enable gitwatch@$(systemd-escape "'-r url/to/repository'
   /path/to/folder").service`
 
 ## Other Articles
+
 ### On the Gitwatch Wiki
+
 * [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/gitwatch/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
