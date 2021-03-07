@@ -75,4 +75,4 @@ jobs:
         run: |
           git config --global user.email "test@email.com"
           git config --global user.name "test user"
-          bashcov bats -rt tests
+          bats -rt tests
