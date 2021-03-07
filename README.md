@@ -104,7 +104,7 @@ Notes:
 
 ## Usage
 
-`gitwatch.sh [-r <remote> [-b <branch>]] <file or directory to watch>`<br />
+`gitwatch.sh [-r <remote> [-b <branch>]] <file or directory to watch>`
 
 It is expected that the watched file/directory are already in a git repository
 (the script will not create a repository). If a folder is being watched, this
