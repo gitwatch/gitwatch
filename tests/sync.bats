@@ -33,7 +33,7 @@ load startup-shutdown
     currentcommit=$(git rev-parse master)
     remotecommit=$(git rev-parse origin/master)
     [ "$currentcommit" = "$remotecommit" ]
-     
+
     # Try making subdirectory with file
     lastcommit=$(git rev-parse master)
     mkdir subdir
@@ -45,7 +45,7 @@ load startup-shutdown
     # Verify that new commit has happened
     currentcommit=$(git rev-parse master)
     [ "$lastcommit" != "$currentcommit" ]
-      
+
     # Verify that push happened
     currentcommit=$(git rev-parse master)
     remotecommit=$(git rev-parse origin/master)
@@ -59,7 +59,7 @@ load startup-shutdown
     # Verify that new commit has happened
     currentcommit=$(git rev-parse master)
     [ "$lastcommit" != "$currentcommit" ]
-      
+
     # Verify that push happened
     currentcommit=$(git rev-parse master)
     remotecommit=$(git rev-parse origin/master)
