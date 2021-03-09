@@ -11,5 +11,13 @@
 #   any violations you want
 #   <!-- markdownlint-restore -->
 
+# Unordered list style
+MD004: false
+
+MD007:
+  # Unordered list indentation
+  indent: 2
+
 # We don't care about inline HTML
 MD033: false
+

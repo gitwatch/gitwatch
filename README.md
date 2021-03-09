@@ -115,7 +115,9 @@ forcefully stopped/killed), which will:
   \(because `git` likes to operate locally)
 * `git add <file>`[a] / `git add .`[b]
 * `git commit -m "Scripted auto-commit on change (<date>)"`[a] / `git commit
+<!-- markdownlint-disable -->
   -a -m"Scripted auto-commit on change (<date>)"`[b]
+<!-- markdownlint-enable -->
 * if a remote is defined (with `-r`) do a push after the commit (a specific
   branch can be selected with `-b`)
 
