@@ -1,0 +1,23 @@
+---
+# Linter rules doc:
+# - https://github.com/DavidAnson/markdownlint
+#
+# This file is based off of the github action super-linter template:
+# - https://github.com/github/super-linter/blob/master/TEMPLATES/.markdown-lint.yml
+#
+# Note:
+# To comment out a single error:
+#   <!-- markdownlint-disable -->
+#   any violations you want
+#   <!-- markdownlint-restore -->
+
+# Unordered list style
+MD004: false
+
+MD007:
+  # Unordered list indentation
+  indent: 2
+
+# We don't care about inline HTML
+MD033: false
+
