@@ -117,8 +117,8 @@ forcefully stopped/killed), which will:
   * `git commit -m "Scripted auto-commit on change (<date>)"`
 * case directory:
   * `cd` into the directory  (because `git` likes to operate locally)
-  * `git add .`
-  * `git commit -a -m "Scripted auto-commit on change (<date>)"`
+  * `git add --all .`
+  * `git commit -m "Scripted auto-commit on change (<date>)"`
 * if a remote is defined (with `-r`) do a push after the commit (a specific
   branch can be selected with `-b`)
 
