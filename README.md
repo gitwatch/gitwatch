@@ -103,7 +103,7 @@ brew install coreutils
 ## What it does
 
 When you start the script, it prepares some variables and checks if the file
-[a] or directory [b] given as input really exists.
+or directory given as input really exists.
 
 Then it goes into the main loop (which will run forever, until the script is
 forcefully stopped/killed), which will:
@@ -111,13 +111,14 @@ forcefully stopped/killed), which will:
 * watch for changes to the file/directory using `inotifywait` (`inotifywait`
   will block until something happens)
 * wait 2 seconds
-* `cd` into the directory [b] / the directory containing the file [a]
-  \(because `git` likes to operate locally)
-* `git add <file>`[a] / `git add .`[b]
-* `git commit -m "Scripted auto-commit on change (<date>)"`[a] / `git commit
-<!-- markdownlint-disable -->
-  -a -m"Scripted auto-commit on change (<date>)"`[b]
-<!-- markdownlint-enable -->
+* case file:
+  * `cd` into the directory containing the file (because `git` likes to operate locally)
+  * `git add <file>`
+  * `git commit -m "Scripted auto-commit on change (<date>)"`
+* case directory:
+  * `cd` into the directory  (because `git` likes to operate locally)
+  * `git add --all .`
+  * `git commit -m "Scripted auto-commit on change (<date>)"`
 * if a remote is defined (with `-r`) do a push after the commit (a specific
   branch can be selected with `-b`)
 
