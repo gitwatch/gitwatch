@@ -30,6 +30,11 @@ jobs:
         env:
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Linter is having errors at symbolic link, appears to be
+          # this bug:
+          # https://github.com/github/super-linter/issues/1400
+          # https://github.com/kucherenko/jscpd/issues/481
+          FILTER_REGEX_EXCLUDE: \.github/linters/\.markdown-lint.yml
 
   #-----------------------------------------------------------------------------
   bats:
