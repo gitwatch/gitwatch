@@ -36,7 +36,8 @@ jobs:
           # https://github.com/github/super-linter/issues/1400
           # https://github.com/kucherenko/jscpd/issues/481
           # Test files are bats files, which don't follow bash standards
-          FILTER_REGEX_EXCLUDE: \.github/linters/\.markdown-lint.yml | tests\.*
+          # FILTER_REGEX_EXCLUDE: \.github/linters/\.markdown-lint.yml | tests\.*
+          FILTER_REGEX_EXCLUDE: tests\.*
 
   #-------------------------------------------------------------------------
   bats:
