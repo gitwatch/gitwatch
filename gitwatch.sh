@@ -317,7 +317,7 @@ diff-lines() {
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-"$INW" "${INW_ARGS[@]}" | while read -r line; do
+eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   # is there already a timeout process running?
   if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
     # kill it and wait for completion
