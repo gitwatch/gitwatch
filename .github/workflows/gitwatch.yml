@@ -26,18 +26,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Lint Code Base
-        uses: github/super-linter@v4
-        env:
-          DEFAULT_BRANCH: master
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Linter is having errors at symbolic link, appears to be
-          # this bug:
-          # https://github.com/github/super-linter/issues/1400
-          # https://github.com/kucherenko/jscpd/issues/481
-          # Test files are bats files, which don't follow bash standards
-          # FILTER_REGEX_EXCLUDE: \.github/linters/\.markdown-lint.yml | tests\.*
-          FILTER_REGEX_EXCLUDE: tests\.*
+    # For the time being, I'm giving up on Super Linter. It's a great tool,
+    # but it's currently broken, and it's taking more time to make it work than
+    # it's worth.
+      # - name: Lint Code Base
+      #   uses: github/super-linter@v4
+      #   env:
+      #     DEFAULT_BRANCH: master
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     # Linter is having errors at symbolic link, appears to be
+      #     # this bug:
+      #     # https://github.com/github/super-linter/issues/1400
+      #     # https://github.com/kucherenko/jscpd/issues/481
+      #     # Test files are bats files, which don't follow bash standards
+      #     # FILTER_REGEX_EXCLUDE: \.github/linters/\.markdown-lint.yml | tests\.*
+      #     # FILTER_REGEX_EXCLUDE: tests\.*
 
   #-------------------------------------------------------------------------
   bats:
