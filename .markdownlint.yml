@@ -21,3 +21,5 @@ MD007:
 # We don't care about inline HTML
 MD033: false
 
+# Removing eval as recommended broke code; might fix later, but not now
+SC2294: false
