@@ -43,6 +43,7 @@ COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
 LISTCHANGES=-1
 LISTCHANGES_COLOR="--color=always"
 GIT_DIR=""
+SKIP_IF_MERGING=0
 
 # Print a message about how to use this script
 shelp() {
@@ -50,7 +51,7 @@ shelp() {
   echo ""
   echo "Usage:"
   echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-  echo "          [-m <msg>] [-l|-L <lines>] <target>"
+  echo "          [-m <msg>] [-l|-L <lines>] [-M] <target>"
   echo ""
   echo "Where <target> is the file or folder which should be watched. The target needs"
   echo "to be in a Git repository, or in the case of a folder, it may also be the top"
@@ -89,6 +90,7 @@ shelp() {
   echo "                  '$EVENTS')"
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
   echo "                  (currently ignored on Mac, which only uses default values)"
+  echo " -M               Prevent commits when there is an ongoing merge in the repo"
   echo ""
   echo "As indicated, several conditions are only checked once at launch of the"
   echo "script. You can make changes to the repo state and configurations even while"
@@ -123,9 +125,14 @@ is_command() {
   hash "$1" 2> /dev/null
 }
 
+# Test whether or not current git directory has ongoign merge
+is_merging () {
+  [ -f "$(git rev-parse --git-dir)"/MERGE_HEAD ]
+}
+
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:p:r:s:e: option; do # Process command line options
+while getopts b:d:h:g:L:l:m:p:r:s:e:M option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -140,6 +147,7 @@ while getopts b:d:h:g:L:l:m:p:r:s:e: option; do # Process command line options
       LISTCHANGES_COLOR=""
       ;;
     m) COMMITMSG=${OPTARG} ;;
+    M) SKIP_IF_MERGING=1 ;;
     p | r) REMOTE=${OPTARG} ;;
     s) SLEEP_TIME=${OPTARG} ;;
     e) EVENTS=${OPTARG} ;;
@@ -362,6 +370,12 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
       # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word splitted
       # shellcheck disable=SC2086
+
+      if [ "$SKIP_IF_MERGING" -eq 1 ] && is_merging; then
+        echo "Skipping commit - repo is merging"
+        exit 0
+      fi
+
       $GIT add $GIT_ADD_ARGS # add file(s) to index
       # shellcheck disable=SC2086
       $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
