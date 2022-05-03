@@ -7,7 +7,7 @@
 
 load startup-shutdown
 
-@test "commit only when git status change" {
+function commit_only_when_git_status_change { #@test
 
     # Start up gitwatch and capture its output
     ${BATS_TEST_DIRNAME}/../gitwatch.sh "$testdir/local/remote" > "$testdir/output.txt" 3>&- &
