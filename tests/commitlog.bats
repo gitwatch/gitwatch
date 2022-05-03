@@ -9,7 +9,7 @@ load startup-shutdown
 
 function commit_log_messages_working { #@test
     # Start up gitwatch with logging, see if works
-    ${BATS_TEST_DIRNAME}/../gitwatch.sh -l 10 "$testdir/local/remote" 3>&- &
+    "${BATS_TEST_DIRNAME}"/../gitwatch.sh -l 10 "$testdir/local/remote" 3>&- &
     GITWATCH_PID=$!
 
     # Keeps kill message from printing to screen
@@ -25,11 +25,11 @@ function commit_log_messages_working { #@test
 
     # Wait a bit for inotify to figure out the file has changed, and do its add,
     # and commit
-    sleep $WAITTIME
+    sleep "$WAITTIME"
 
     # Make a new change
     echo "line2" >> file1.txt
-    sleep $WAITTIME
+    sleep "$WAITTIME"
 
     # Check commit log that the diff is in there
     run git log -1 --oneline
