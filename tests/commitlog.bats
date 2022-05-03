@@ -7,7 +7,8 @@
 
 load startup-shutdown
 
-@test "commit log messages working" {
+@test "commit log messages working"
+{
     # Start up gitwatch with logging, see if works
     ${BATS_TEST_DIRNAME}/../gitwatch.sh -l 10 "$testdir/local/remote" 3>&- &
     GITWATCH_PID=$!

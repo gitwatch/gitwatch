@@ -7,7 +7,8 @@
 
 load startup-shutdown
 
-@test "syncing correctly" {
+@test "syncing correctly"
+{
     # Start up gitwatch and see if commit and push happen automatically
     # after waiting two seconds
     ${BATS_TEST_DIRNAME}/../gitwatch.sh -r origin "$testdir/local/remote" 3>- &
