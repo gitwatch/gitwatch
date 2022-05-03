@@ -7,8 +7,7 @@
 
 load startup-shutdown
 
-@test "remote git dirs working, with commit logging"
-{
+function remote_git_dirs_working_with_commit_logging { #@test
     # Move .git somewhere else
     dotgittestdir=$(mktemp -d)
     mv "$testdir/local/remote/.git" "$dotgittestdir"
