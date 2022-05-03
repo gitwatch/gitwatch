@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Super-Linter
+      - name: Lint Code Base
         uses: github/super-linter@v4
         env:
           DEFAULT_BRANCH: master
