@@ -87,7 +87,8 @@ jobs:
         run: |
           git config --global user.email "test@email.com"
           git config --global user.name "test user"
-      #     bats -rt tests
+          bats -rt tests
+          echo "Finished running tests"
 
       - name: Test step
         run: echo "Now at test step"
