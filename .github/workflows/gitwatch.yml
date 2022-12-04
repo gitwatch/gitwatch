@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -59,9 +59,10 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Setup node
+        uses: actions/setup-node@v3
       - name: Setup BATS
-        # Even though this says 1.2.0,it's actually using 1.2.1
-        uses: mig4/setup-bats@v1.2.0
+        run: sudo npm install -g bats
 
       - name: Install gitwatch dependencies
         shell: bash
@@ -79,7 +80,10 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      # - name: Setup upterm session
+      #   uses: lhotari/action-upterm@v1
 
       - name: Run tests
         shell: bash
@@ -87,3 +91,8 @@ jobs:
           git config --global user.email "test@email.com"
           git config --global user.name "test user"
           bats -rt tests
+          #bats -rt othertests
+          echo "Finished running tests"
+
+      - name: Test step
+        run: echo "Now at test step"
