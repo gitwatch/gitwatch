@@ -19,17 +19,6 @@ setup() {
   git clone -q ../remote
 }
 
-function close_non_std_fds() {
-  local open_fds non_std_fds=()
-  get_open_fds
-  for fd in "${open_fds[@]}"; do
-    if [[ $fd -gt 2 ]]; then
-      non_std_fds+=("$fd")
-    fi
-  done
-  close_fds "${non_std_fds[@]}"
-}
-
 teardown() {
   echo '# Teardown started' >&3
   # Remove testing directories
@@ -39,6 +28,11 @@ teardown() {
   #    rm -rf $testdir
 
   echo "Process id again $GITWATCH_PID" >&3
+
+  # Try killing background process
+  kill -9 %1
+  fg
+
   # Make sure gitwatch script gets killed if script stopped background
   # Also make sure to kill fswatch if on Mac
   killall fswatch
