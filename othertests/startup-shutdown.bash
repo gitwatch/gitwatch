@@ -19,6 +19,17 @@ setup() {
   git clone -q ../remote
 }
 
+function close_non_std_fds() {
+  local open_fds non_std_fds=()
+  get_open_fds
+  for fd in "${open_fds[@]}"; do
+    if [[ $fd -gt 2 ]]; then
+      non_std_fds+=("$fd")
+    fi
+  done
+  close_fds "${non_std_fds[@]}"
+}
+
 teardown() {
   echo '# Teardown started' >&3
   # Remove testing directories
@@ -34,5 +45,8 @@ teardown() {
   # Must kill the entire tree of processes generated
   pkill -15 -P "$GITWATCH_PID"
 
+  close_non_std_fds
+
   echo '# Teardown complete' >&3
+
 }
