@@ -7,7 +7,7 @@ function spaces_in_target_dir { #@test
     # shellcheck disable=SC2034
     WAITTIME=4
     # Set up directory structure and initialize remote
-    testdir=$(mktemp -d "/tmp/tmp space.XXXXXXX")
+    testdir=$(mktemp -d "/tmp/tmpspace.XXXXXXX")
     # shellcheck disable=SC2164
     cd "$testdir"
     mkdir remote
