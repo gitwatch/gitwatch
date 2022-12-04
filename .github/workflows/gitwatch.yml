@@ -62,7 +62,6 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v3
       - name: Setup BATS
-        # Even though this says 1.2.0,it's actually using 1.2.1
         run: sudo npm install -g bats
 
       - name: Install gitwatch dependencies
@@ -89,3 +88,6 @@ jobs:
           git config --global user.email "test@email.com"
           git config --global user.name "test user"
           bats -rt tests
+
+      - name: Test step
+        run: echo "Now at test step"
