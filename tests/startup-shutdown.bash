@@ -25,7 +25,9 @@ teardown() {
   # shellcheck disable=SC2164
   cd /tmp
 
-  #    rm -rf $testdir
+  # Kill background process
+  kill -9 %1
+  fg
 
   # Make sure gitwatch script gets killed if script stopped background
   # Must kill the entire tree of processes generated
