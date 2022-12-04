@@ -80,14 +80,14 @@ jobs:
           fi
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Run tests
-        shell: bash
-        run: |
-          git config --global user.email "test@email.com"
-          git config --global user.name "test user"
-          bats -rt tests
+      # - name: Run tests
+      #   shell: bash
+      #   run: |
+      #     git config --global user.email "test@email.com"
+      #     git config --global user.name "test user"
+      #     bats -rt tests
 
       - name: Test step
         run: echo "Now at test step"
