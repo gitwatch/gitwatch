@@ -29,10 +29,10 @@ teardown() {
 
   echo "Process id again $GITWATCH_PID" >&3
   # Make sure gitwatch script gets killed if script stopped background
+  # Also make sure to kill fswatch if on Mac
+  killall fswatch
   # Must kill the entire tree of processes generated
   pkill -15 -P "$GITWATCH_PID"
-  # Also make sure to kill fswatch if on Mac
-  killall -9 fswatch
 
   echo '# Teardown complete' >&3
 }
