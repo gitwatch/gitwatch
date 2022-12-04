@@ -22,9 +22,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v3
+      - run: sudo npm install -g bats
 
     # For the time being, I'm giving up on Super Linter. It's a great tool,
     # but it's currently broken, and it's taking more time to make it work than
