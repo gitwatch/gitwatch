@@ -20,6 +20,7 @@ setup() {
 }
 
 teardown() {
+  echo '# Teardown started' >&3
   # Remove testing directories
   # shellcheck disable=SC2164
   cd /tmp
@@ -29,4 +30,6 @@ teardown() {
   # Make sure gitwatch script gets killed if script stopped background
   # Must kill the entire tree of processes generated
   pkill -15 -P "$GITWATCH_PID"
+
+  echo '# Teardown complete' >&3
 }
