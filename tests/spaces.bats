@@ -7,6 +7,7 @@ load startup-shutdown-spaces
 function spaces_in_target_dir { #@test
     # Start up gitwatch with logging, see if works
     "${BATS_TEST_DIRNAME}"/../gitwatch.sh -l 10 "$testdir/local/remote" 3>&- &
+    echo "Testdir: $testdir" >&3
     GITWATCH_PID=$!
 
     # Keeps kill message from printing to screen
