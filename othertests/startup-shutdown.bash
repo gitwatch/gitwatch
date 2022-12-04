@@ -32,7 +32,7 @@ teardown() {
   # Must kill the entire tree of processes generated
   pkill -15 -P "$GITWATCH_PID"
   # Also make sure to kill fswatch if on Mac
-  killall fswatch
+  killall -9 fswatch
 
   echo '# Teardown complete' >&3
 }
