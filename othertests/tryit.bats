@@ -5,6 +5,7 @@
 # To run it, at a command prompt:
 # bats testscript.bats
 
+load startup-shutdown
 
 function commit_log_messages_working { #@test
     echo "Test complete"
