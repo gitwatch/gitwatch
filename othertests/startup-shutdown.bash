@@ -27,6 +27,7 @@ teardown() {
 
   #    rm -rf $testdir
 
+  echo "Process id again $GITWATCH_PID" >&3
   # Make sure gitwatch script gets killed if script stopped background
   # Must kill the entire tree of processes generated
   pkill -9 -P "$GITWATCH_PID"

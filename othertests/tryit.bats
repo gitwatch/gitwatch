@@ -12,7 +12,8 @@ function commit_log_messages_working { #@test
     "${BATS_TEST_DIRNAME}"/../gitwatch.sh -l 10 "$testdir/local/remote" 3>&- &
     GITWATCH_PID=$!
 
-    echo "Test complete"
+    echo "Process id $GITWATCH_PID" >&3
+    echo "Test complete" >&3
 }
 
 #     # Start up gitwatch with logging, see if works
