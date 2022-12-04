@@ -5,7 +5,7 @@ setup() {
   # shellcheck disable=SC2034
   WAITTIME=4
   # Set up directory structure and initialize remote
-  testdir=$(mktemp -d)
+  testdir=$(mktemp -d "/tmp/temp space.XXXXX")
   # shellcheck disable=SC2164
   cd "$testdir"
   mkdir remote
@@ -18,7 +18,7 @@ setup() {
   mkdir local
   # shellcheck disable=SC2164
   cd local
-  git clone -q ../remote "remote with spaces"
+  git clone -q ../remote "rem with spaces"
 }
 
 teardown() {

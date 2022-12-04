@@ -6,7 +6,7 @@ load startup-shutdown-spaces
 
 function spaces_in_target_dir { #@test
     # Start up gitwatch with logging, see if works
-    "${BATS_TEST_DIRNAME}"/../gitwatch.sh -l 10 "$testdir/local/remote with spaces" 3>&- &
+    "${BATS_TEST_DIRNAME}"/../gitwatch.sh -l 10 "$testdir/local/rem with spaces" 3>&- &
     echo "Testdir: $testdir" >&3
     GITWATCH_PID=$!
 
@@ -14,7 +14,7 @@ function spaces_in_target_dir { #@test
     disown
 
     # Create a file, verify that it hasn't been added yet, then commit
-    cd "remote with spaces"
+    cd "rem with spaces"
 
     # According to inotify documentation, a race condition results if you write
     # to directory too soon after it has been created; hence, a short wait.
