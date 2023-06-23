@@ -178,7 +178,7 @@ have other calls in `rc.local` after the mentioned line, because the
 
 #### systemd
 
-* If installed to a path other than `/usr/bin/gitwatch`, modify
+* If installed to a path other than `/usr/local/bin/gitwatch`, modify
   `gitwatch@.service` to suit
 * Create dir if it does not exist and copy systemd service file with `mkdir -p
   "$HOME/.config/systemd/user" && cp gitwatch@.service
