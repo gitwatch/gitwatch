@@ -29,6 +29,8 @@ teardown() {
   kill -9 %1
   fg
 
+  killall inotifywait
+
   # Also make sure to kill fswatch if on Mac
   killall fswatch
   # Make sure gitwatch script gets killed if script stopped background

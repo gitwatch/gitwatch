@@ -51,7 +51,7 @@ shelp() {
   echo ""
   echo "Usage:"
   echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-  echo "          [-m <msg>] [-l|-L <lines>] [-M] <target>"
+  echo "          [-m <msg>] [-l|-L <lines>] [-x <pattern>] [-M] <target>"
   echo ""
   echo "Where <target> is the file or folder which should be watched. The target needs"
   echo "to be in a Git repository, or in the case of a folder, it may also be the top"
@@ -91,6 +91,7 @@ shelp() {
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
   echo "                  (currently ignored on Mac, which only uses default values)"
   echo " -M               Prevent commits when there is an ongoing merge in the repo"
+  echo " -x <pattern>     Pattern to exclude from inotifywait"
   echo ""
   echo "As indicated, several conditions are only checked once at launch of the"
   echo "script. You can make changes to the repo state and configurations even while"
@@ -132,7 +133,7 @@ is_merging () {
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:p:r:s:e:M option; do # Process command line options
+while getopts b:d:h:g:L:l:m:p:r:s:e:x:M option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -150,6 +151,7 @@ while getopts b:d:h:g:L:l:m:p:r:s:e:M option; do # Process command line options
     M) SKIP_IF_MERGING=1 ;;
     p | r) REMOTE=${OPTARG} ;;
     s) SLEEP_TIME=${OPTARG} ;;
+    x) EXCLUDE_PATTERN=${OPTARG} ;;
     e) EVENTS=${OPTARG} ;;
     *)
       stderr "Error: Option '${option}' does not exist."
@@ -221,12 +223,19 @@ fi
 if [ -d "$1" ]; then # if the target is a directory
 
   TARGETDIR=$(sed -e "s/\/*$//" <<< "$IN") # dir to CD into before using git commands: trim trailing slash, if any
+
+  if [ -z $EXCLUDE_PATTERN ]; then
+     EXCLUDE_OPTS="'(\.git/|\.git$)'"
+  else
+     EXCLUDE_OPTS="'(\.git/|\.git$|$EXCLUDE_PATTERN)'"
+  fi
+
   # construct inotifywait-commandline
   if [ "$(uname)" != "Darwin" ]; then
-    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "'(\.git/|\.git$)'" "\"$TARGETDIR\"")
+    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
   else
     # still need to fix EVENTS since it wants them listed one-by-one
-    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" "'(\.git/|\.git$)'" "\"$TARGETDIR\"")
+    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
   fi
   GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
   GIT_COMMIT_ARGS=""     # add -a switch to "commit" call just to be sure
