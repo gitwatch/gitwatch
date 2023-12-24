@@ -9,6 +9,9 @@
             * [Update](#update)
          * [bpkg](#bpkg)
          * [Archlinux](#archlinux)
+         * [NixOs](#nixos)
+            * [As Module](#as-module)
+            * [As Package](#as-package)
       * [Requirements](#requirements)
          * [Notes for Mac](#notes-for-mac)
       * [What it does](#what-it-does)
@@ -83,6 +86,31 @@ the command below. You may need to invoke `bpkg` with `sudo` when using the
 
 There is an [AUR](https://aur.archlinux.org/packages/gitwatch-git/) package
 for Archlinux. Install it with you favorite aur helper.
+
+### NixOs
+
+#### As Module
+
+Say you add this as input `gitwatch` to your flake. Then you may want to append
+field `gitwatch.modules` to your `nixosSystem` modules. Then you are able to
+enable `services.gitwatch.*` service in per-repository mode. Like next:
+
+```nix
+services.gitwatch.my-repo = {
+    enable = true;
+    path = "/home/me/my-repo";
+    remote = "git@github.com:me/my-repo.git";
+    user = "me";
+};
+```
+
+This will make NixOS to create `systemd` service for `my-repo` repository.
+
+#### As Package
+
+You can to play around with nix package inside this repository. Call `nix run`
+in this repository to run `gitwatch` script or `nix shell` to enter shell with
+`gitwatch` command available.
 
 ## Requirements
 
