@@ -20,6 +20,7 @@
             * [SysVInit](#sysvinit)
             * [systemd](#systemd)
       * [Other Articles](#other-articles)
+         * [Community Articles](#community-articles)
          * [On the Gitwatch Wiki](#on-the-gitwatch-wiki)
 
 <!-- Added by: harleypig, at: Sun Mar  7 03:39:32 PM MST 2021 -->
@@ -217,6 +218,11 @@ have other calls in `rc.local` after the mentioned line, because the
 
 ## Other Articles
 
+### Community Articles
+
+* [How To Use `Gitwatch` by Maisa Milena](https://medium.com/@maisa.milena/how-to-use-gitwatch-92c72e8ea4c4)
+* [Syncing and Backing Up Your Thoughts with `Obsidian`, `Syncthing`, and `Gitwatch` by Vinícius Costa](https://medium.com/@maisa.milena/how-to-use-gitwatch-92c72e8ea4c4)
+
 ### On the Gitwatch Wiki
 
-* [How to install `gitwatch` as a Debian service with `supervisord`](https://github.com/gitwatch/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
+* [How to Install `Gitwatch` as a Debian Service With `supervisord`](https://github.com/gitwatch/gitwatch/wiki/gitwatch-as-a-service-on-Debian-with-supervisord)
