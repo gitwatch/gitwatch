@@ -221,7 +221,7 @@ have other calls in `rc.local` after the mentioned line, because the
 ### Community Articles
 
 * [How To Use `Gitwatch` by Maisa Milena](https://medium.com/@maisa.milena/how-to-use-gitwatch-92c72e8ea4c4)
-* [Syncing and Backing Up Your Thoughts with `Obsidian`, `Syncthing`, and `Gitwatch` by Vinícius Costa](https://medium.com/@maisa.milena/how-to-use-gitwatch-92c72e8ea4c4)
+* [Syncing and Backing Up Your Thoughts with `Obsidian`, `Syncthing`, and `Gitwatch` by Vinícius Costa](https://viniciusnevescosta.medium.com/syncing-and-backing-up-your-thoughts-with-obsidian-syncthing-and-gitwatch-a55670b2b63f)
 
 ### On the Gitwatch Wiki
 
