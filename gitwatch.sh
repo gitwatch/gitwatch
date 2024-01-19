@@ -36,6 +36,7 @@
 #
 
 REMOTE=""
+PULL_BEFORE_PUSH=0
 BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
@@ -65,6 +66,7 @@ shelp() {
   echo '                  "+%Y-%m-%d %H:%M:%S"'
   echo " -r <remote>      If given and non-empty, a 'git push' to the given <remote>"
   echo "                  is done after every commit; default is empty, i.e. no push"
+  echo " -R               If given along with -r, a 'git pull --rebase <remote>' is done before any push"
   echo " -b <branch>      The branch which should be pushed automatically;"
   echo "                - if not given, the push command used is  'git push <remote>',"
   echo "                    thus doing a default push (see git man pages for details)"
@@ -133,7 +135,7 @@ is_merging () {
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:p:r:s:e:x:M option; do # Process command line options
+while getopts b:d:h:g:L:l:m:p:r:s:e:x:MR option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -150,6 +152,7 @@ while getopts b:d:h:g:L:l:m:p:r:s:e:x:M option; do # Process command line option
     m) COMMITMSG=${OPTARG} ;;
     M) SKIP_IF_MERGING=1 ;;
     p | r) REMOTE=${OPTARG} ;;
+    R) PULL_BEFORE_PUSH=1 ;;
     s) SLEEP_TIME=${OPTARG} ;;
     x) EXCLUDE_PATTERN=${OPTARG} ;;
     e) EVENTS=${OPTARG} ;;
@@ -293,8 +296,13 @@ if [ -n "$REMOTE" ]; then        # are we pushing to a remote?
       PUSH_CMD="$GIT push $REMOTE $BRANCH"
     fi
   fi
+  if [[ $PULL_BEFORE_PUSH -eq 1 ]]; then
+      PULL_CMD="$GIT pull --rebase $REMOTE" # Branch not set, pull to remote without a branch
+  fi
+
 else
   PUSH_CMD="" # if not remote is selected, make sure push command is empty
+  PULL_CMD="" # if not remote is selected, make sure pull command is empty
 fi
 
 # A function to reduce git diff output to the actual changed content, and insert file line numbers.
@@ -388,6 +396,11 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
       $GIT add $GIT_ADD_ARGS # add file(s) to index
       # shellcheck disable=SC2086
       $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+
+      if [ -n "$PULL_CMD" ]; then
+        echo "Pull command is $PULL_CMD"
+        eval "$PULL_CMD"
+      fi
 
       if [ -n "$PUSH_CMD" ]; then
         echo "Push command is $PUSH_CMD"
