@@ -93,12 +93,11 @@ for Archlinux. Install it with you favorite aur helper.
 
 #### As Module
 
-Say you add this as input `gitwatch` to your flake. Then you may want to append
-field `gitwatch.modules` to your `nixosSystem` modules. Then you are able to
-enable `services.gitwatch.*` service in per-repository mode. Like next:
+If you add `gitwatch` to your flake, and append field `gitwatch.modules` to
+your `nixosSystem` modules, then you can enable `services.gitwatch.*`:
 
 ```nix
-services.gitwatch.my-repo = {
+services.gitwatch.<service name> = {
     enable = true;
     path = "/home/me/my-repo";
     remote = "git@github.com:me/my-repo.git";
@@ -106,7 +105,9 @@ services.gitwatch.my-repo = {
 };
 ```
 
-This will make NixOS to create `systemd` service for `my-repo` repository.
+This will make NixOS to create `systemd` service named `gitwatch-<service name>`.
+Note that the service does not start before reboot, or alternatively if it is
+started manually: `systemctl start gitwatch-<service name>`.
 
 #### As Package
 
