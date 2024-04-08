@@ -10,7 +10,7 @@
         in
         {
           packages = rec {
-            gitwatch = pkgs.callPackage ./gitwatch.sh { };
+            gitwatch = pkgs.callPackage ./gitwatch.nix { };
             default = gitwatch;
           };
         });
