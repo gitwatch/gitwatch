@@ -19,6 +19,7 @@ let
       {
         inherit (cfg) enable;
         after = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
         description = "gitwatch for ${name}";
         path = with pkgs; [ gitwatch git openssh ];
         script = ''
