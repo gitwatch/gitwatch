@@ -1,5 +1,5 @@
 [Unit]
-Description=Watch file or directory and git commit all changes. run with: systemctl --user --now enable gitwatch@$(systemd-escape "'-r url/to/repository' /path/to/folder").service
+Description=Watch file or directory and git commit all changes. run with: systemctl --user --now enable gitwatch@$(systemd-escape -- "'-r url/to/repository' /path/to/folder").service
 
 [Service]
 Environment="SCRIPT_ARGS=%I"
