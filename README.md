@@ -9,7 +9,7 @@
             * [Update](#update)
          * [bpkg](#bpkg)
          * [Archlinux](#archlinux)
-         * [NixOs](#nixos)
+         * [NixOS](#nixos)
             * [As Module](#as-module)
             * [As Package](#as-package)
       * [Requirements](#requirements)
@@ -89,12 +89,15 @@ the command below. You may need to invoke `bpkg` with `sudo` when using the
 There is an [AUR](https://aur.archlinux.org/packages/gitwatch-git/) package
 for Archlinux. Install it with you favorite aur helper.
 
-### NixOs
+### NixOS
+
+Starting from NixOS 24.11 this package available in mainline. Additionally, you
+can use receipts from this repository.
 
 #### As Module
 
-If you add `gitwatch` to your flake, and append field `gitwatch.modules` to
-your `nixosSystem` modules, then you can enable `services.gitwatch.*`:
+Each watching path should be described in _submodule_ `services.gitwatch.*` like
+next:
 
 ```nix
 services.gitwatch.<service name> = {
@@ -106,14 +109,11 @@ services.gitwatch.<service name> = {
 ```
 
 This will make NixOS to create `systemd` service named `gitwatch-<service name>`.
-Note that the service does not start before reboot, or alternatively if it is
-started manually: `systemctl start gitwatch-<service name>`.
+More details you can see at `man configuration.nix`.
 
 #### As Package
 
-You can to play around with nix package inside this repository. Call `nix run`
-in this repository to run `gitwatch` script or `nix shell` to enter shell with
-`gitwatch` command available.
+The `gitwatch` script available as package in _nixpkgs_;
 
 ## Requirements
 
