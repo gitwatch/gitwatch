@@ -7,9 +7,7 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     env:
-      LOG_TO_CS: ./logToCs.py
       RAW_LOG: pre-commit.log
-      CS_XML: pre-commit.xml
       SKIP: no-commit-to-branch
     steps:
       - run: sudo apt-get update && sudo apt-get install cppcheck
@@ -32,24 +30,11 @@ jobs:
           set -o pipefail
           pre-commit gc
           pre-commit run --show-diff-on-failure --color=always --all-files | tee ${RAW_LOG}
-      - name: Convert Raw Log to CheckStyle format (launch script)
-        # if: ${{ failure() }}
-        if: false
-        run: |
-          python ${LOG_TO_CS} ${RAW_LOG} ${CS_XML}
-      - name: Convert Raw Log to Checkstyle format (launch action)
+      - name: Convert Raw Log to Annotations
         uses: mdeweerd/logToCheckStyle@v2025.1.1
         if: ${{ failure() }}
         with:
           in: ${{ env.RAW_LOG }}
-          out: ${{ env.CS_XML }}
-      - name: Annotate Source Code with Messages
-        uses: staabm/annotate-pull-request-from-checkstyle-action@v1
-        if: ${{ failure() }}
-        with:
-          files: ${{ env.CS_XML }}
-          notices-as-warnings: true # optional
-          prepend-filename: true # optional
       - uses: actions/cache/save@v4
         if: ${{ ! cancelled() }}
         with:
