@@ -1,0 +1,87 @@
+---
+files: ^(.*\.(py|json|md|sh|yaml|yml|cfg|txt))$
+exclude: ^(\.[^/]*cache/.*|demo/.*|debug/.*)$
+repos:
+  # Disable because this does not work for the main author.
+  # - repo: https://github.com/pre-commit/mirrors-prettier
+  #   rev: "v2.7.1"
+  #   stages: [manual]
+  #   hooks:
+  #     - id: prettier
+  - repo: https://github.com/executablebooks/mdformat
+    # Do this before other tools "fixing" the line endings
+    rev: 0.7.22
+    hooks:
+      - id: mdformat
+        name: Format Markdown
+        entry: mdformat # Executable to run, with fixed options
+        language: python
+        types: [markdown]
+        args: [--wrap, "75", --number]
+        # files: ^HomeAssistant.md$
+        additional_dependencies:
+          - mdformat-toc
+          - mdformat-beautysh
+          - mdformat-config
+          - mdformat-gfm
+          - setuptools
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: no-commit-to-branch
+        args: [--branch, main]
+      - id: check-yaml
+        # Exclude because of bug in checker
+        exclude: ^(docker-compose\.yml|.*/release-drafter\.yml)$
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-json
+      - id: mixed-line-ending
+      - id: check-builtin-literals
+      - id: check-ast
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: check-docstring-first
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+      - id: pretty-format-json
+        exclude: ^(.vscode|.devcontainer)
+        args:
+          # order of keys in manifest.json is "special"
+          - --no-sort-keys
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args:
+          - --no-warnings
+          - -d
+          - "{extends: relaxed, rules: {line-length: {max: 90}}}"
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        # exclude: (\.md|apps.yaml|translations/.*.yaml)$
+  - repo: https://github.com/IamTheFij/docker-pre-commit
+    rev: v3.0.1
+    hooks:
+      - id: docker-compose-check
+  - repo: https://github.com/lovesegfault/beautysh.git
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
+        args: [ "-i", "2" ]
+        additional_dependencies:
+          - setuptools
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^[^\.].*\.sh$
+        args: [--shell, bash]
