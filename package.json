@@ -4,5 +4,7 @@
   "description": "A script to watch a file or folder and automatically commit changes to a Git repo",
   "global": "1",
   "install": "install -b gitwatch.sh ${PREFIX:-/usr/local}/bin/gitwatch",
-  "scripts": [ "gitwatch.sh" ]
+  "scripts": [
+    "gitwatch.sh"
+  ]
 }

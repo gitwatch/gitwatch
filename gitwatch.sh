@@ -228,9 +228,9 @@ if [ -d "$1" ]; then # if the target is a directory
   TARGETDIR=$(sed -e "s/\/*$//" <<< "$IN") # dir to CD into before using git commands: trim trailing slash, if any
 
   if [ -z $EXCLUDE_PATTERN ]; then
-     EXCLUDE_OPTS="'(\.git/|\.git$)'"
+    EXCLUDE_OPTS="'(\.git/|\.git$)'"
   else
-     EXCLUDE_OPTS="'(\.git/|\.git$|$EXCLUDE_PATTERN)'"
+    EXCLUDE_OPTS="'(\.git/|\.git$|$EXCLUDE_PATTERN)'"
   fi
 
   # construct inotifywait-commandline
@@ -297,7 +297,7 @@ if [ -n "$REMOTE" ]; then        # are we pushing to a remote?
     fi
   fi
   if [[ $PULL_BEFORE_PUSH -eq 1 ]]; then
-      PULL_CMD="$GIT pull --rebase $REMOTE" # Branch not set, pull to remote without a branch
+    PULL_CMD="$GIT pull --rebase $REMOTE" # Branch not set, pull to remote without a branch
   fi
 
 else
