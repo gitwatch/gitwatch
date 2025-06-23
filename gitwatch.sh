@@ -385,7 +385,7 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     }
     STATUS=$($GIT status -s)
     if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
-      # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word splitted
+      # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word split
       # shellcheck disable=SC2086
 
       if [ "$SKIP_IF_MERGING" -eq 1 ] && is_merging; then
