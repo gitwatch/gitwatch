@@ -227,6 +227,7 @@ if [ -d "$1" ]; then # if the target is a directory
 
   TARGETDIR=$(sed -e "s/\/*$//" <<< "$IN") # dir to CD into before using git commands: trim trailing slash, if any
 
+  # shellcheck disable=SC2086
   if [ -z $EXCLUDE_PATTERN ]; then
     EXCLUDE_OPTS="'(\.git/|\.git$)'"
   else
@@ -235,9 +236,11 @@ if [ -d "$1" ]; then # if the target is a directory
 
   # construct inotifywait-commandline
   if [ "$(uname)" != "Darwin" ]; then
+    # shellcheck disable=SC2206
     INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
   else
     # still need to fix EVENTS since it wants them listed one-by-one
+    # shellcheck disable=SC2206
     INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
   fi
   GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
@@ -342,6 +345,8 @@ diff-lines() {
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
+# Would be great to fix the ignored issue below; ignoring it for now.
+# shellcheck disable=SC2294
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   # is there already a timeout process running?
   if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
@@ -393,6 +398,7 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
         exit 0
       fi
 
+      # shellcheck disable=SC2086
       $GIT add $GIT_ADD_ARGS # add file(s) to index
       # shellcheck disable=SC2086
       $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
