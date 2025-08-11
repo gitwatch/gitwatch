@@ -41,6 +41,8 @@ BRANCH=""
 SLEEP_TIME=2
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by gitwatch.sh"
+COMMITCMD=""
+PASSDIFFS=0
 LISTCHANGES=-1
 LISTCHANGES_COLOR="--color=always"
 GIT_DIR=""
@@ -88,6 +90,11 @@ shelp() {
   echo "                  (unless the <fmt> specified by -d is empty, in which case %d"
   echo "                  is replaced by an empty string); the default message is:"
   echo '                  "Scripted auto-commit on change (%d) by gitwatch.sh"'
+  echo " -c <command>     The command to be run to generate a commit message. If empty,"
+  echo "                  defaults to the standard commit message. This option overrides -m,"
+  echo "                  -d, and -l."
+  echo " -C               Pass list of diffed files to <command> via pipe. Has no effect if"
+  echo "                  -c is not given."
   echo " -e <events>      Events passed to inotifywait to watch (defaults to "
   echo "                  '$EVENTS')"
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
@@ -128,14 +135,14 @@ is_command() {
   hash "$1" 2> /dev/null
 }
 
-# Test whether or not current git directory has ongoign merge
+# Test whether or not current git directory has ongoing merge
 is_merging () {
   [ -f "$(git rev-parse --git-dir)"/MERGE_HEAD ]
 }
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:p:r:s:e:x:MR option; do # Process command line options
+while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MR option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -150,6 +157,8 @@ while getopts b:d:h:g:L:l:m:p:r:s:e:x:MR option; do # Process command line optio
       LISTCHANGES_COLOR=""
       ;;
     m) COMMITMSG=${OPTARG} ;;
+    c) COMMITCMD=${OPTARG} ;;
+    C) PASSDIFFS=1 ;;
     M) SKIP_IF_MERGING=1 ;;
     p | r) REMOTE=${OPTARG} ;;
     R) PULL_BEFORE_PUSH=1 ;;
@@ -380,6 +389,16 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
       else
         #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
         FORMATTED_COMMITMSG=$($GIT diff --stat | grep '|')
+      fi
+    fi
+
+    if [ -n "$COMMITCMD" ]; then
+      if [ "$PASSDIFFS" -eq 1 ]; then
+        # If -C is set, pass the list of diffed files to the commit command
+        # Unsure whether or not I should check if the command fails
+        FORMATTED_COMMITMSG="$($COMMITCMD < <($GIT diff --name-only))"
+      else
+        FORMATTED_COMMITMSG="$($COMMITCMD)"
       fi
     fi
 
