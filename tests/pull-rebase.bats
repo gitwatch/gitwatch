@@ -31,8 +31,8 @@ function pulling_and_rebasing_correctly { #@test
     sleep $WAITTIME
 
     # Verify that push happened
-    currentcommit=$(git rev-parse master)
-    remotecommit=$(git rev-parse origin/master)
+    currentcommit=$(git rev-parse main)
+    remotecommit=$(git rev-parse origin/main)
     [ "$currentcommit" = "$remotecommit" ]
 
     # Create a second local
@@ -56,8 +56,8 @@ function pulling_and_rebasing_correctly { #@test
     echo "line3" >> file3.txt
 
     # Verify that push happened
-    currentcommit=$(git rev-parse master)
-    remotecommit=$(git rev-parse origin/master)
+    currentcommit=$(git rev-parse main)
+    remotecommit=$(git rev-parse origin/main)
     [ "$currentcommit" = "$remotecommit" ]
 
     # Verify that new file is here

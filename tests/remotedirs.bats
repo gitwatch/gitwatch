@@ -32,14 +32,14 @@ function remote_git_dirs_working_with_commit_logging { #@test
     sleep $WAITTIME
 
     # Store commit for later comparison
-    lastcommit=$(git --git-dir $dotgittestdir/.git rev-parse master)
+    lastcommit=$(git --git-dir $dotgittestdir/.git rev-parse main)
 
     # Make a new change
     echo "line2" >> file1.txt
     sleep $WAITTIME
     
     # Verify that new commit has happened
-    currentcommit=$(git --git-dir $dotgittestdir/.git rev-parse master)
+    currentcommit=$(git --git-dir $dotgittestdir/.git rev-parse main)
     [ "$lastcommit" != "$currentcommit" ]
 
     # Check commit log that the diff is in there

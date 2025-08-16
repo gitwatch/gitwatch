@@ -30,12 +30,12 @@ function syncing_correctly { #@test
     sleep $WAITTIME
 
     # Verify that push happened
-    currentcommit=$(git rev-parse master)
-    remotecommit=$(git rev-parse origin/master)
+    currentcommit=$(git rev-parse main)
+    remotecommit=$(git rev-parse origin/main)
     [ "$currentcommit" = "$remotecommit" ]
 
     # Try making subdirectory with file
-    lastcommit=$(git rev-parse master)
+    lastcommit=$(git rev-parse main)
     mkdir subdir
     cd subdir
     echo "line2" >> file2.txt
@@ -43,12 +43,12 @@ function syncing_correctly { #@test
     sleep $WAITTIME
 
     # Verify that new commit has happened
-    currentcommit=$(git rev-parse master)
+    currentcommit=$(git rev-parse main)
     [ "$lastcommit" != "$currentcommit" ]
 
     # Verify that push happened
-    currentcommit=$(git rev-parse master)
-    remotecommit=$(git rev-parse origin/master)
+    currentcommit=$(git rev-parse main)
+    remotecommit=$(git rev-parse origin/main)
     [ "$currentcommit" = "$remotecommit" ]
 
 
@@ -57,12 +57,12 @@ function syncing_correctly { #@test
     sleep $WAITTIME
 
     # Verify that new commit has happened
-    currentcommit=$(git rev-parse master)
+    currentcommit=$(git rev-parse main)
     [ "$lastcommit" != "$currentcommit" ]
 
     # Verify that push happened
-    currentcommit=$(git rev-parse master)
-    remotecommit=$(git rev-parse origin/master)
+    currentcommit=$(git rev-parse main)
+    remotecommit=$(git rev-parse origin/main)
     [ "$currentcommit" = "$remotecommit" ]
 
     # Remove testing directories
