@@ -36,20 +36,20 @@ CMD_ARGS+=" -m \"${COMMIT_MSG}\""
 CMD_ARGS+=" -d \"${DATE_FMT}\""
 
 if [ -n "${EXCLUDE_PATTERN}" ]; then
-    CMD_ARGS+=" -x \"${EXCLUDE_PATTERN}\""
+  CMD_ARGS+=" -x \"${EXCLUDE_PATTERN}\""
 fi
 
 if [ -n "${EVENTS}" ]; then
-    CMD_ARGS+=" -e \"${EVENTS}\""
+  CMD_ARGS+=" -e \"${EVENTS}\""
 fi
 
 # Add boolean flags if they are set to "true"
 if [ "${PULL_BEFORE_PUSH}" = "true" ]; then
-    CMD_ARGS+=" -R"
+  CMD_ARGS+=" -R"
 fi
 
 if [ "${SKIP_IF_MERGING}" = "true" ]; then
-    CMD_ARGS+=" -M"
+  CMD_ARGS+=" -M"
 fi
 
 # The final argument is the directory to watch
