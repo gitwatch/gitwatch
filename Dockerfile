@@ -4,8 +4,9 @@ RUN apk add --no-cache bash git inotify-tools openssh
 
 RUN mkdir -p /app
 WORKDIR /app
-COPY gitwatch.sh ./ 
 
-RUN chmod 755 -- *.sh
+COPY gitwatch.sh entrypoint.sh ./
 
-ENTRYPOINT ["./gitwatch.sh"]
+RUN chmod +x /app/gitwatch.sh /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]
