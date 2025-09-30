@@ -27,7 +27,7 @@ let
             git clone ${branch} "${cfg.remote}" "${cfg.path}"
           fi
           ${fetcher}
-          gitwatch ${getvar "-r" "remote"} ${branch} ${cfg.path}
+          gitwatch ${getvar "-r" "remote"} ${getvar "-m" "message"} ${branch} ${cfg.path}
         '';
         serviceConfig.User = cfg.user;
       }
@@ -46,6 +46,7 @@ in
         user = "user";
         path = "/home/user/watched-project";
         remote = "git@github.com:me/my-project.git";
+        message = "Auto-commit by gitwatch on %d";
       };
       disabled-repo = {
         enable = false;
@@ -69,6 +70,11 @@ in
         };
         remote = lib.mkOption {
           description = "Optional url of remote repository";
+          type = nullOr str;
+          default = null;
+        };
+        message = lib.mkOption {
+          description = "Optional message to use in as commit message.";
           type = nullOr str;
           default = null;
         };
