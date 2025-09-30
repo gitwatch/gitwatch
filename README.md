@@ -110,6 +110,7 @@ services.gitwatch.<service name> = {
     path = "/home/me/my-repo";
     remote = "git@github.com:me/my-repo.git";
     user = "me";
+    message = "Auto-commit by gitwatch on %d";
 };
 ```
 
