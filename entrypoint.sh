@@ -16,7 +16,8 @@ GIT_BRANCH=${GIT_BRANCH:-main}
 SLEEP_TIME=${SLEEP_TIME:-2}
 COMMIT_MSG=${COMMIT_MSG:-"Scripted auto-commit on change (%d) by gitwatch.sh"}
 DATE_FMT=${DATE_FMT:-"+%Y-%m-%d %H:%M:%S"}
-EXCLUDE_PATTERN=${EXCLUDE_PATTERN:-""}
+# Read the user-friendly pattern
+USER_EXCLUDE_PATTERN=${EXCLUDE_PATTERN:-""}
 EVENTS=${EVENTS:-""}
 
 # Boolean flags (set to "true" to enable)
@@ -25,41 +26,54 @@ SKIP_IF_MERGING=${SKIP_IF_MERGING:-false}
 
 # --- Command Construction ---
 
-# Start with the base command
-CMD_ARGS=""
+# Use a bash array to safely build the command and its arguments
+cmd=( "/app/gitwatch.sh" )
 
 # Add options with arguments
-CMD_ARGS+=" -r ${GIT_REMOTE}"
-CMD_ARGS+=" -b ${GIT_BRANCH}"
-CMD_ARGS+=" -s ${SLEEP_TIME}"
-CMD_ARGS+=" -m \"${COMMIT_MSG}\""
-CMD_ARGS+=" -d \"${DATE_FMT}\""
+cmd+=( -r "${GIT_REMOTE}" )
+cmd+=( -b "${GIT_BRANCH}" )
+cmd+=( -s "${SLEEP_TIME}" )
+cmd+=( -m "${COMMIT_MSG}" )
+cmd+=( -d "${DATE_FMT}" )
 
-if [ -n "${EXCLUDE_PATTERN}" ]; then
-  CMD_ARGS+=" -x \"${EXCLUDE_PATTERN}\""
+# --- Convert User-Friendly Exclude Pattern to Regex ---
+if [ -n "${USER_EXCLUDE_PATTERN}" ]; then
+  # 1. Replace commas and any surrounding spaces with the regex OR pipe `|`
+  PROCESSED_PATTERN=$(echo "$USER_EXCLUDE_PATTERN" | sed 's/\s*,\s*/|/g')
+  
+  # 2. Escape periods to treat them as literal dots in regex
+  PROCESSED_PATTERN=${PROCESSED_PATTERN//./\\.}
+
+  # 3. Convert glob stars `*` into the regex equivalent `.*`
+  PROCESSED_PATTERN=${PROCESSED_PATTERN//\*/\.\*}
+  
+  cmd+=( -x "${PROCESSED_PATTERN}" )
 fi
 
+
 if [ -n "${EVENTS}" ]; then
-  CMD_ARGS+=" -e \"${EVENTS}\""
+  cmd+=( -e "${EVENTS}" )
 fi
 
 # Add boolean flags if they are set to "true"
 if [ "${PULL_BEFORE_PUSH}" = "true" ]; then
-  CMD_ARGS+=" -R"
+  cmd+=( -R )
 fi
 
 if [ "${SKIP_IF_MERGING}" = "true" ]; then
-  CMD_ARGS+=" -M"
+  cmd+=( -M )
 fi
 
 # The final argument is the directory to watch
-CMD_ARGS+=" \"${GIT_WATCH_DIR}\""
+cmd+=( "${GIT_WATCH_DIR}" )
 
 # --- Execution ---
 
 echo "Starting gitwatch with the following arguments:"
-echo "/app/gitwatch.sh ${CMD_ARGS}"
+# Use printf with %q to safely quote the arguments for display
+printf "%q " "${cmd[@]}"
+echo # Add a newline for cleaner logging
 echo "-------------------------------------------------"
 
-# Use eval to correctly handle quotes in arguments
-eval exec /app/gitwatch.sh "${CMD_ARGS}"
+# Use exec to replace the current shell process with gitwatch
+exec "${cmd[@]}"
