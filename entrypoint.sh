@@ -24,6 +24,7 @@ EVENTS=${EVENTS:-""}
 PULL_BEFORE_PUSH=${PULL_BEFORE_PUSH:-false}
 SKIP_IF_MERGING=${SKIP_IF_MERGING:-false}
 VERBOSE=${VERBOSE:-false}
+COMMIT_ON_START=${COMMIT_ON_START:-false}
 
 # --- Command Construction ---
 
@@ -71,6 +72,10 @@ fi
 
 if [ "${VERBOSE}" = "true" ]; then
   cmd+=( -v )
+fi
+
+if [ "${COMMIT_ON_START}" = "true" ]; then
+  cmd+=( -f )
 fi
 
 # The final argument is the directory to watch
