@@ -16,6 +16,9 @@
     - [NixOS](#nixos)
       - [As Module](#as-module)
       - [As Package](#as-package)
+    - [Docker](#docker)
+      - [Docker Compose (Recommended)](#docker-compose-recommended)
+      - [Using the Dockerfile](#using-the-dockerfile)
   - [Requirements](#requirements)
     - [Notes for Mac](#notes-for-mac)
   - [What it does](#what-it-does)
@@ -121,6 +124,120 @@ This will make NixOS to create `systemd` service named
 #### As Package
 
 The `gitwatch` script available as package in _nixpkgs_;
+
+## Docker
+
+You can also run `gitwatch` inside a Docker container. This is useful for
+isolating dependencies and ensuring a consistent environment.
+
+### Docker Compose (Recommended)
+
+The easiest way to run `gitwatch` with Docker is by using the provided
+`docker-compose.yml` file.
+
+**1. Prerequisites:**
+
+- **Docker and Docker Compose**: Make sure you have both installed.
+  - [Install Docker](https://docs.docker.com/get-docker/)
+  - [Install Docker Compose](https://docs.docker.com/compose/install/)
+- **A Git Repository**: You need a local directory that is a Git repository
+  you want to watch.
+- **SSH Key**: For pushing to a remote repository, the container needs
+  access to an SSH key that is authorized with your Git provider.
+
+**2. Configuration:**
+
+The `docker-compose.yml` file is configured using environment variables.
+You can either edit the `environment` section directly in the file or
+create a `.env` file in the same directory to set the values.
+
+Here's a breakdown of the important parts of the `docker-compose.yml` file:
+
+- **`volumes`**: This is the most critical section to configure.
+  - `./watched-repo:/app/watched-repo`: This maps a directory from your
+    computer (the "host") into the container.
+    - You **must** change `./watched-repo` to the path of the local Git
+      repository you want `gitwatch` to monitor.
+  - `~/.ssh/id_rsa:/root/.ssh/id_rsa:ro`: This securely mounts your SSH
+    private key into the container in read-only mode (`ro`). This is
+    necessary for `gitwatch` to push changes to your remote repository.
+  - `~/.gitconfig:/root/.gitconfig:ro`: This mounts your Git configuration
+    into the container. This ensures that the commits made by `gitwatch`
+    are attributed to you with the correct name and email.
+- **`environment`**: This section controls how `gitwatch` behaves.
+  <!-- prettier-ignore-start -->
+  **3. Environment Variables**
+
+The following environment variables are available for configuring the
+`gitwatch` container:
+
+| Variable           | Default Value          | Description                                                                                                                   |
+| :----------------- | :--------------------- | :---------------------------------------------------------------------------------------------------------------------------- |
+| `GIT_WATCH_DIR`    | `/app/watched-repo`    | The directory inside the container to watch for changes. This must match the container path you set in the `volumes` section. |
+| `GIT_REMOTE`       | `origin`               | The name of the remote repository to push to.                                                                                 |
+| `GIT_BRANCH`       | `main`                 | The branch to push to.                                                                                                        |
+| `PULL_BEFORE_PUSH` | `"false"`              | Set to `"true"` to run `git pull --rebase` before every push.                                                                 |
+| `SLEEP_TIME`       | `2`                    | Time in seconds to wait after a file change before committing.                                                                |
+| `COMMIT_MSG`       | `"Auto-commit: %d"`    | The commit message format. `%d` is replaced with the date/time.                                                               |
+| `DATE_FMT`         | `"+%Y-%m-%d %H:%M:%S"` | The date format used in the commit message (see `man date` for options).                                                      |
+| `EXCLUDE_PATTERN`  | `""`                   | A comma-separated list of patterns to exclude from monitoring (e.g., `"*.log, *.tmp, tmp/"`).                                 |
+| `SKIP_IF_MERGING`  | `"false"`              | Set to `"true"` to prevent commits when a merge is in progress.                                                               |
+
+<!-- prettier-ignore-end -->
+
+**4. Running gitwatch:**
+
+- **Start the container** in the background (detached mode):
+
+  ```sh
+  docker-compose up -d
+  ```
+
+- **View the logs** to see what `gitwatch` is doing:
+
+  ```sh
+  docker-compose logs -f
+  ```
+
+- **Stop the container**:
+
+  ```sh
+  docker-compose down
+  ```
+
+### Using the Dockerfile
+
+If you prefer to build the Docker image yourself, you can use the provided
+`Dockerfile`. This is useful if you want to customize the image with
+additional tools or dependencies.
+
+**1. Build the image:**
+
+From the root of the `gitwatch` repository, run:
+
+```sh
+docker build -t gitwatch .
+```
+
+**2. Run the container:**
+
+To run the container, you need to provide the same volumes and environment
+variables as the Docker Compose setup.
+
+```sh
+docker run -d \
+    --name gitwatch \
+    -v /path/to/your/repo:/app/watched-repo \
+    -v ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro \
+    -v ~/.gitconfig:/root/.gitconfig:ro \
+    -e GIT_WATCH_DIR="/app/watched-repo" \
+    -e GIT_REMOTE="origin" \
+    -e GIT_BRANCH="main" \
+    gitwatch
+```
+
+**Important:** Remember to replace `/path/to/your/repo` with the actual
+path to the Git repository you want to watch.
 
 ## Requirements
 
