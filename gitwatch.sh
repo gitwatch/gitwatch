@@ -383,7 +383,8 @@ perform_commit() {
   fi
 
   if [[ $LISTCHANGES -ge 0 ]]; then # allow listing diffs in the commit log message, unless if there are too many lines changed
-    local DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
+    local DIFF_COMMITMSG
+    DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
     local LENGTH_DIFF_COMMITMSG=0
     if [[ $LISTCHANGES -ge 1 ]]; then
       LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
@@ -410,7 +411,8 @@ perform_commit() {
     fi
   fi
 
-  local STATUS=$($GIT status -s)
+  local STATUS
+  STATUS=$($GIT status -s)
   if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
     verbose_echo "Tracked changes detected."
     # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word split
