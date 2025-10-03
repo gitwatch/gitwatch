@@ -23,6 +23,7 @@ EVENTS=${EVENTS:-""}
 # Boolean flags (set to "true" to enable)
 PULL_BEFORE_PUSH=${PULL_BEFORE_PUSH:-false}
 SKIP_IF_MERGING=${SKIP_IF_MERGING:-false}
+VERBOSE=${VERBOSE:-false}
 
 # --- Command Construction ---
 
@@ -66,6 +67,10 @@ fi
 
 if [ "${SKIP_IF_MERGING}" = "true" ]; then
   cmd+=( -M )
+fi
+
+if [ "${VERBOSE}" = "true" ]; then
+  cmd+=( -v )
 fi
 
 # The final argument is the directory to watch
