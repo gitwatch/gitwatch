@@ -160,7 +160,6 @@ create a `.env` file in the same directory to set the values.
 Here's a breakdown of the important parts of the `docker-compose.yml` file:
 
 - **`volumes`**: This is the most critical section to configure.
-
   - `./watched-repo:/app/watched-repo`: This maps a directory from your
     computer (the "host") into the container.
     - You **must** change `./watched-repo` to the path of the local Git
