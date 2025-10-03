@@ -16,6 +16,9 @@
     - [NixOS](#nixos)
       - [As Module](#as-module)
       - [As Package](#as-package)
+    - [Docker](#docker)
+      - [Docker Compose](#docker-compose)
+      - [Dockerfile](#dockerfile)
   - [Requirements](#requirements)
     - [Notes for Mac](#notes-for-mac)
   - [What it does](#what-it-does)
@@ -120,6 +123,75 @@ This will make NixOS to create `systemd` service named
 #### As Package
 
 The `gitwatch` script available as package in _nixpkgs_;
+
+### Docker
+
+You can also run `gitwatch` inside a Docker container. This is useful for isolating dependencies and ensuring a consistent environment.
+
+#### Docker Compose
+
+The easiest way to run `gitwatch` with Docker is by using the provided `docker-compose.yml` file.
+
+1.  **Prerequisites:**
+    * Docker: [https://docs.docker.com/get-docker/](https://docs.docker.com/get-docker/)
+    * Docker Compose: [https://docs.docker.com/compose/install/](https://docs.docker.com/compose/install/)
+
+2.  **Configuration:**
+
+    The `docker-compose.yml` file is pre-configured to use environment variables for customization. You can modify the `environment` section in the `docker-compose.yml` file or create a `.env` file in the same directory to override the default values.
+
+    **Example `docker-compose.yml` environment variables:**
+    ```yaml
+    environment:
+      GIT_WATCH_DIR: /app/watched-repo
+      GIT_REMOTE: origin
+      GIT_BRANCH: main
+      PULL_BEFORE_PUSH: "false"
+      SLEEP_TIME: 2
+      COMMIT_MSG: "Auto-commit: %d"
+      DATE_FMT: "+%Y-%m-%d %H:%M:%S"
+      EXCLUDE_PATTERN: ""
+      SKIP_IF_MERGING: "false"
+    ```
+
+3.  **Running:**
+
+    * Start the `gitwatch` container in detached mode:
+        ```sh
+        docker-compose up -d
+        ```
+
+    * To view the logs:
+        ```sh
+        docker-compose logs -f
+        ```
+
+    * To stop the container:
+        ```sh
+        docker-compose down
+        ```
+
+#### Dockerfile
+
+If you prefer to build the Docker image yourself, you can use the provided `Dockerfile`.
+
+1.  **Build the image:**
+    ```sh
+    docker build -t gitwatch .
+    ```
+
+2.  **Run the container:**
+    ```sh
+    docker run -d \
+      --name gitwatch \
+      -v ./watched-repo:/app/watched-repo \
+      -v ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro \
+      -v ~/.gitconfig:/root/.gitconfig:ro \
+      -e GIT_WATCH_DIR="/app/watched-repo" \
+      -e GIT_REMOTE="origin" \
+      -e GIT_BRANCH="main" \
+      gitwatch
+    ```
 
 ## Requirements
 
