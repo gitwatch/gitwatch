@@ -2,12 +2,13 @@
 #
 # gitwatch - watch file or directory and git commit all changes as they happen
 #
-# Copyright (C) 2013-2018  Patrick Lehner
+# Copyright (C) 2013-2025  Patrick Lehner
 #   with modifications and contributions by:
 #   - Matthew McGowan
 #   - Dominik D. Geyer
 #   - Phil Thompson
 #   - Dave Musicant
+#   - Darin Theurer
 #
 #############################################################################
 #    This program is free software: you can redistribute it and/or modify
@@ -47,6 +48,7 @@ LISTCHANGES=-1
 LISTCHANGES_COLOR="--color=always"
 GIT_DIR=""
 SKIP_IF_MERGING=0
+VERBOSE=0
 
 # Print a message about how to use this script
 shelp() {
@@ -54,7 +56,7 @@ shelp() {
   echo ""
   echo "Usage:"
   echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-  echo "          [-m <msg>] [-l|-L <lines>] [-x <pattern>] [-M] <target>"
+  echo "          [-m <msg>] [-l|-L <lines>] [-x <pattern>] [-M] [-v] <target>"
   echo ""
   echo "Where <target> is the file or folder which should be watched. The target needs"
   echo "to be in a Git repository, or in the case of a folder, it may also be the top"
@@ -100,6 +102,7 @@ shelp() {
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
   echo "                  (currently ignored on Mac, which only uses default values)"
   echo " -M               Prevent commits when there is an ongoing merge in the repo"
+  echo " -v               Run in verbose mode for debugging. Enables informational messages and command tracing (set -x)."
   echo " -x <pattern>     Pattern to exclude from inotifywait"
   echo ""
   echo "As indicated, several conditions are only checked once at launch of the"
@@ -122,6 +125,13 @@ stderr() {
   echo "$@" >&2
 }
 
+# print all arguments to stdout if in verbose mode
+verbose_echo() {
+  if [ "$VERBOSE" -eq 1 ]; then
+    echo "$@"
+  fi
+}
+
 # clean up at end of program, killing the remaining sleep process if it still exists
 cleanup() {
   if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
@@ -142,7 +152,7 @@ is_merging () {
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MR option; do # Process command line options
+while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MRv option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -163,6 +173,10 @@ while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MR option; do # Process command line o
     p | r) REMOTE=${OPTARG} ;;
     R) PULL_BEFORE_PUSH=1 ;;
     s) SLEEP_TIME=${OPTARG} ;;
+    v)
+      VERBOSE=1
+      set -x
+      ;;
     x) EXCLUDE_PATTERN=${OPTARG} ;;
     e) EVENTS=${OPTARG} ;;
     *)
@@ -233,6 +247,7 @@ else
 fi
 
 if [ -d "$1" ]; then # if the target is a directory
+  verbose_echo "Target is a directory."
 
   TARGETDIR=$(sed -e "s/\/*$//" <<< "$IN") # dir to CD into before using git commands: trim trailing slash, if any
 
@@ -256,6 +271,7 @@ if [ -d "$1" ]; then # if the target is a directory
   GIT_COMMIT_ARGS=""     # add -a switch to "commit" call just to be sure
 
 elif [ -f "$1" ]; then # if the target is a single file
+  verbose_echo "Target is a file."
 
   TARGETDIR=$(dirname "$IN") # dir to CD into before using git commands: extract from file name
   # construct inotifywait-commandline
@@ -297,22 +313,28 @@ cd "$TARGETDIR" || {
 }
 
 if [ -n "$REMOTE" ]; then        # are we pushing to a remote?
+  verbose_echo "Push remote selected: $REMOTE"
   if [ -z "$BRANCH" ]; then      # Do we have a branch set to push to ?
+    verbose_echo "No push branch selected, using default."
     PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
   else
     # check if we are on a detached HEAD
     if HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null); then # HEAD is not detached
+      verbose_echo "Push branch selected: $BRANCH, current branch: ${HEADREF#refs/heads/}"
       #PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
       PUSH_CMD="$GIT push $REMOTE ${HEADREF#refs/heads/}:$BRANCH"
     else # HEAD is detached
+      verbose_echo "Push branch selected: $BRANCH, HEAD is detached."
       PUSH_CMD="$GIT push $REMOTE $BRANCH"
     fi
   fi
   if [[ $PULL_BEFORE_PUSH -eq 1 ]]; then
+    verbose_echo "Pull before push is enabled."
     PULL_CMD="$GIT pull --rebase $REMOTE" # Branch not set, pull to remote without a branch
   fi
 
 else
+  verbose_echo "No push remote selected."
   PUSH_CMD="" # if not remote is selected, make sure push command is empty
   PULL_CMD="" # if not remote is selected, make sure pull command is empty
 fi
@@ -357,6 +379,7 @@ diff-lines() {
 # Would be great to fix the ignored issue below; ignoring it for now.
 # shellcheck disable=SC2294
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
+  verbose_echo "Change detected: $line"
   # is there already a timeout process running?
   if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
     # kill it and wait for completion
@@ -409,28 +432,35 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
     }
     STATUS=$($GIT status -s)
     if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
+      verbose_echo "Tracked changes detected."
       # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word split
       # shellcheck disable=SC2086
 
       if [ "$SKIP_IF_MERGING" -eq 1 ] && is_merging; then
-        echo "Skipping commit - repo is merging"
+        verbose_echo "Skipping commit - repo is merging"
         exit 0
       fi
 
       # shellcheck disable=SC2086
       $GIT add $GIT_ADD_ARGS # add file(s) to index
+      verbose_echo "Running git add with arguments: $GIT_ADD_ARGS"
       # shellcheck disable=SC2086
       $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
+      verbose_echo "Running git commit with arguments: $GIT_COMMIT_ARGS -m\"$FORMATTED_COMMITMSG\""
 
       if [ -n "$PULL_CMD" ]; then
         echo "Pull command is $PULL_CMD"
+        verbose_echo "Executing pull command: $PULL_CMD"
         eval "$PULL_CMD"
       fi
 
       if [ -n "$PUSH_CMD" ]; then
         echo "Push command is $PUSH_CMD"
+        verbose_echo "Executing push command: $PUSH_CMD"
         eval "$PUSH_CMD"
       fi
+    else
+      verbose_echo "No tracked changes detected."
     fi
   ) & # and send into background
 
