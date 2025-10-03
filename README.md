@@ -170,10 +170,9 @@ Here's a breakdown of the important parts of the `docker-compose.yml` file:
   - `~/.gitconfig:/root/.gitconfig:ro`: This mounts your Git configuration
     into the container. This ensures that the commits made by `gitwatch`
     are attributed to you with the correct name and email.
-
 - **`environment`**: This section controls how `gitwatch` behaves.
-
-**3. Environment Variables**
+  <!-- prettier-ignore-start -->
+  **3. Environment Variables**
 
 The following environment variables are available for configuring the
 `gitwatch` container:
@@ -189,6 +188,8 @@ The following environment variables are available for configuring the
 | `DATE_FMT`         | `"+%Y-%m-%d %H:%M:%S"` | The date format used in the commit message (see `man date` for options).                                                      |
 | `EXCLUDE_PATTERN`  | `""`                   | A comma-separated list of patterns to exclude from monitoring (e.g., `"*.log, *.tmp, tmp/"`).                                 |
 | `SKIP_IF_MERGING`  | `"false"`              | Set to `"true"` to prevent commits when a merge is in progress.                                                               |
+
+<!-- prettier-ignore-end -->
 
 **4. Running gitwatch:**
 
