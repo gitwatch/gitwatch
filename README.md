@@ -18,6 +18,7 @@
       - [As Package](#as-package)
     - [Docker](#docker)
       - [Docker Compose](#docker-compose)
+        - [Environment Variables](#environment-variables)
       - [Dockerfile](#dockerfile)
       - [Environment Variables](#environment-variables)
   - [Requirements](#requirements)
@@ -141,19 +142,21 @@ The easiest way to run `gitwatch` with Docker is by using the provided `docker-c
 
     The `docker-compose.yml` file is pre-configured to use environment variables for customization. You can modify the `environment` section in the `docker-compose.yml` file or create a `.env` file in the same directory to override the default values.
 
-    **Example `docker-compose.yml` environment variables:**
-    ```yaml
-    environment:
-      GIT_WATCH_DIR: /app/watched-repo
-      GIT_REMOTE: origin
-      GIT_BRANCH: main
-      PULL_BEFORE_PUSH: "false"
-      SLEEP_TIME: 2
-      COMMIT_MSG: "Auto-commit: %d"
-      DATE_FMT: "+%Y-%m-%d %H:%M:%S"
-      EXCLUDE_PATTERN: ""
-      SKIP_IF_MERGING: "false"
-    ```
+#### Environment Variables
+
+The following environment variables are available for configuring the Docker container:
+
+| Variable | Default Value | Description |
+|---|---|---|
+| `GIT_WATCH_DIR` | `/app/watched-repo` | The directory inside the container to watch for changes. This should match the container path in the `volumes` section. |
+| `GIT_REMOTE` | `origin` | The remote repository to push to (e.g., 'origin'). |
+| `GIT_BRANCH` | `main` | The branch to push to (e.g., 'main' or 'master'). |
+| `PULL_BEFORE_PUSH` | `false` | Set to "true" to run 'git pull --rebase' before every push. |
+| `SLEEP_TIME` | `2` | Time in seconds to wait after a file change before committing. |
+| `COMMIT_MSG` | `"Auto-commit: %d"` | The commit message format. `%d` is replaced with the date/time. |
+| `DATE_FMT` | `"+%Y-%m-%d %H:%M:%S"` | The date format used in the commit message (see 'man date' for options). |
+| `EXCLUDE_PATTERN` | `""` | A pattern to exclude from monitoring (e.g., `"*.log"` or `"tmp/"`). |
+| `SKIP_IF_MERGING` | `false` | Set to "true" to prevent commits when a merge is in progress. |
 
 3.  **Running:**
 
@@ -193,22 +196,6 @@ If you prefer to build the Docker image yourself, you can use the provided `Dock
       -e GIT_BRANCH="main" \
       gitwatch
     ```
-
-#### Environment Variables
-
-The following environment variables are available for configuring the Docker container:
-
-| Variable | Default Value | Description |
-|---|---|---|
-| `GIT_WATCH_DIR` | `/app/watched-repo` | The directory inside the container to watch for changes. This should match the container path in the `volumes` section. |
-| `GIT_REMOTE` | `origin` | The remote repository to push to (e.g., 'origin'). |
-| `GIT_BRANCH` | `main` | The branch to push to (e.g., 'main' or 'master'). |
-| `PULL_BEFORE_PUSH` | `false` | Set to "true" to run 'git pull --rebase' before every push. |
-| `SLEEP_TIME` | `2` | Time in seconds to wait after a file change before committing. |
-| `COMMIT_MSG` | `"Auto-commit: %d"` | The commit message format. `%d` is replaced with the date/time. |
-| `DATE_FMT` | `"+%Y-%m-%d %H:%M:%S"` | The date format used in the commit message (see 'man date' for options). |
-| `EXCLUDE_PATTERN` | `""` | A pattern to exclude from monitoring (e.g., `"*.log"` or `"tmp/"`). |
-| `SKIP_IF_MERGING` | `false` | Set to "true" to prevent commits when a merge is in progress. |
 
 ## Requirements
 
