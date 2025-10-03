@@ -148,9 +148,8 @@ The easiest way to run `gitwatch` with Docker is by using the provided
   - [Install Docker Compose](https://docs.docker.com/compose/install/)
 - **A Git Repository**: You need a local directory that is a Git repository
   you want to watch.
-- **SSH Key**: For pushing to a remote repository, the container
-  needs access to an SSH key that is authorized with your
-  Git provider (e.g., GitHub, GitLab).
+- **SSH Key**: For pushing to a remote repository, the container needs
+  access to an SSH key that is authorized with your Git provider.
 
 **2. Configuration:**
 
