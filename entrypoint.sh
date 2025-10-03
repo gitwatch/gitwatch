@@ -40,13 +40,13 @@ cmd+=( -d "${DATE_FMT}" )
 if [ -n "${USER_EXCLUDE_PATTERN}" ]; then
   # 1. Replace commas and any surrounding spaces with the regex OR pipe `|`
   PROCESSED_PATTERN=$(echo "$USER_EXCLUDE_PATTERN" | sed 's/\s*,\s*/|/g')
-  
+
   # 2. Escape periods to treat them as literal dots in regex
   PROCESSED_PATTERN=${PROCESSED_PATTERN//./\\.}
 
   # 3. Convert glob stars `*` into the regex equivalent `.*`
   PROCESSED_PATTERN=${PROCESSED_PATTERN//\*/\.\*}
-  
+
   cmd+=( -x "${PROCESSED_PATTERN}" )
 fi
 
