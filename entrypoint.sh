@@ -38,13 +38,17 @@ cmd+=( -d "${DATE_FMT}" )
 
 # --- Convert User-Friendly Exclude Pattern to Regex ---
 if [ -n "${USER_EXCLUDE_PATTERN}" ]; then
-  # 1. Replace commas and any surrounding spaces with the regex OR pipe `|`
-  PROCESSED_PATTERN=$(echo "$USER_EXCLUDE_PATTERN" | sed 's/\s*,\s*/|/g')
+  # 1. Replace commas with spaces to treat as separate words.
+  PATTERNS_AS_WORDS=${USER_EXCLUDE_PATTERN//,/ }
+  # 2. Use an array to store and automatically trim whitespace from each pattern.
+  read -r -a PATTERN_ARRAY <<< "$PATTERNS_AS_WORDS"
+  # 3. Join the array elements with the regex OR pipe `|`.
+  PROCESSED_PATTERN=$(IFS=\|; echo "${PATTERN_ARRAY[*]}")
 
-  # 2. Escape periods to treat them as literal dots in regex
+  # 4. Escape periods to treat them as literal dots in regex
   PROCESSED_PATTERN=${PROCESSED_PATTERN//./\\.}
 
-  # 3. Convert glob stars `*` into the regex equivalent `.*`
+  # 5. Convert glob stars `*` into the regex equivalent `.*`
   PROCESSED_PATTERN=${PROCESSED_PATTERN//\*/\.\*}
 
   cmd+=( -x "${PROCESSED_PATTERN}" )
