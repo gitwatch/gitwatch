@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  gitwatch:
+    # Pull the latest official image from the gitwatch repository on GitHub Container Registry
+    image: ghcr.io/gitwatch/gitwatch:latest
+    restart: always
+    volumes:
+      # The local directory on your machine that you want to watch
+      # IMPORTANT: You must create this directory first (e.g., ./my-notes-repo)
+      - ./watched-repo:/app/watched-repo
+
+      # Mount your SSH key for pushing to remote repositories
+      - ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+
+      # Mount your git config to use your correct user name and email for commits
+      - ~/.gitconfig:/root/.gitconfig:ro
+    environment:
+      # --- Watched Directory ---
+      # This should match the container path in the 'volumes' section above
+      GIT_WATCH_DIR: /app/watched-repo
+
+      # --- Git Remote Configuration ---
+      # The remote repository to push to (e.g., 'origin')
+      GIT_REMOTE: origin
+      # The branch to push to (e.g., 'main' or 'master')
+      GIT_BRANCH: main
+      # Set to "true" to run 'git pull --rebase' before every push
+      PULL_BEFORE_PUSH: "false"
+
+      # --- Gitwatch Behavior ---
+      # Time in seconds to wait after a file change before committing
+      SLEEP_TIME: 2
+      # The commit message format. %d is replaced with the date/time
+      COMMIT_MSG: "Auto-commit: %d"
+      # The date format used in the commit message (see 'man date' for options)
+      DATE_FMT: "+%Y-%m-%d %H:%M:%S"
+      # A comma-separated list of patterns to exclude from monitoring (e.g., "*.log, *.tmp, tmp/")
+      EXCLUDE_PATTERN: ""
+      # Set to "true" to prevent commits when a merge is in progress
+      SKIP_IF_MERGING: "false"
+      # Set to "true" to commit any pending changes on startup
+      COMMIT_ON_START: "false"
+      # Set to "true" to enable verbose output for debugging
+      VERBOSE: "false"
