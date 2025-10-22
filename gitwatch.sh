@@ -261,11 +261,11 @@ if [ -d "$1" ]; then # if the target is a directory
   # construct inotifywait-commandline
   if [ "$(uname)" != "Darwin" ]; then
     # shellcheck disable=SC2206
-    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
+    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
   else
     # still need to fix EVENTS since it wants them listed one-by-one
     # shellcheck disable=SC2206
-    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
+    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
   fi
   GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
   GIT_COMMIT_ARGS=""     # add -a switch to "commit" call just to be sure
