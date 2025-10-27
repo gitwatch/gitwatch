@@ -49,6 +49,7 @@ LISTCHANGES_COLOR="--color=always"
 GIT_DIR=""
 SKIP_IF_MERGING=0
 VERBOSE=0
+COMMIT_ON_START=0
 
 # Print a message about how to use this script
 shelp() {
@@ -56,7 +57,7 @@ shelp() {
   echo ""
   echo "Usage:"
   echo "${0##*/} [-s <secs>] [-d <fmt>] [-r <remote> [-b <branch>]]"
-  echo "          [-m <msg>] [-l|-L <lines>] [-x <pattern>] [-M] [-v] <target>"
+  echo "          [-m <msg>] [-l|-L <lines>] [-x <pattern>] [-M] [-v] [-f] <target>"
   echo ""
   echo "Where <target> is the file or folder which should be watched. The target needs"
   echo "to be in a Git repository, or in the case of a folder, it may also be the top"
@@ -101,6 +102,7 @@ shelp() {
   echo "                  '$EVENTS')"
   echo "                  (useful when using inotify-win, e.g. -e modify,delete,move)"
   echo "                  (currently ignored on Mac, which only uses default values)"
+  echo " -f               Commit any pending changes on startup before watching."
   echo " -M               Prevent commits when there is an ongoing merge in the repo"
   echo " -v               Run in verbose mode for debugging. Enables informational messages and command tracing (set -x)."
   echo " -x <pattern>     Pattern to exclude from inotifywait"
@@ -152,7 +154,7 @@ is_merging () {
 
 ###############################################################################
 
-while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MRv option; do # Process command line options
+while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MRvf option; do # Process command line options
   case "${option}" in
     b) BRANCH=${OPTARG} ;;
     d) DATE_FMT=${OPTARG} ;;
@@ -169,6 +171,7 @@ while getopts b:d:h:g:L:l:m:c:C:p:r:s:e:x:MRv option; do # Process command line 
     m) COMMITMSG=${OPTARG} ;;
     c) COMMITCMD=${OPTARG} ;;
     C) PASSDIFFS=1 ;;
+    f) COMMIT_ON_START=1 ;;
     M) SKIP_IF_MERGING=1 ;;
     p | r) REMOTE=${OPTARG} ;;
     R) PULL_BEFORE_PUSH=1 ;;
@@ -261,11 +264,11 @@ if [ -d "$1" ]; then # if the target is a directory
   # construct inotifywait-commandline
   if [ "$(uname)" != "Darwin" ]; then
     # shellcheck disable=SC2206
-    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
+    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
   else
     # still need to fix EVENTS since it wants them listed one-by-one
     # shellcheck disable=SC2206
-    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "\"$TARGETDIR\"")
+    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
   fi
   GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
   GIT_COMMIT_ARGS=""     # add -a switch to "commit" call just to be sure
@@ -369,7 +372,87 @@ diff-lines() {
   done
 }
 
+# The main commit and push logic
+perform_commit() {
+  local LOCAL_FORMATTED_COMMITMSG
+
+  if [ -n "$DATE_FMT" ]; then
+    LOCAL_FORMATTED_COMMITMSG="${COMMITMSG/\%d/$(date "$DATE_FMT")}"
+  else
+    LOCAL_FORMATTED_COMMITMSG="$FORMATTED_COMMITMSG"
+  fi
+
+  if [[ $LISTCHANGES -ge 0 ]]; then # allow listing diffs in the commit log message, unless if there are too many lines changed
+    local DIFF_COMMITMSG
+    DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
+    local LENGTH_DIFF_COMMITMSG=0
+    if [[ $LISTCHANGES -ge 1 ]]; then
+      LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
+    fi
+    if [[ $LENGTH_DIFF_COMMITMSG -le $LISTCHANGES ]]; then
+      # Use git diff as the commit msg, unless if files were added or deleted but not modified
+      if [ -n "$DIFF_COMMITMSG" ]; then
+        LOCAL_FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
+      else
+        LOCAL_FORMATTED_COMMITMSG="New files added: $($GIT status -s)"
+      fi
+    else
+      LOCAL_FORMATTED_COMMITMSG=$($GIT diff --stat | grep '|')
+    fi
+  fi
+
+  if [ -n "$COMMITCMD" ]; then
+    if [ "$PASSDIFFS" -eq 1 ]; then
+      # If -C is set, pass the list of diffed files to the commit command
+      # Unsure whether or not I should check if the command fails
+      LOCAL_FORMATTED_COMMITMSG="$($COMMITCMD < <($GIT diff --name-only))"
+    else
+      LOCAL_FORMATTED_COMMITMSG="$($COMMITCMD)"
+    fi
+  fi
+
+  local STATUS
+  STATUS=$($GIT status -s)
+  if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
+    verbose_echo "Tracked changes detected."
+    # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word split
+    # shellcheck disable=SC2086
+
+    if [ "$SKIP_IF_MERGING" -eq 1 ] && is_merging; then
+      verbose_echo "Skipping commit - repo is merging"
+      return
+    fi
+
+    # shellcheck disable=SC2086
+    $GIT add $GIT_ADD_ARGS # add file(s) to index
+    verbose_echo "Running git add with arguments: $GIT_ADD_ARGS"
+    # shellcheck disable=SC2086
+    $GIT commit $GIT_COMMIT_ARGS -m"$LOCAL_FORMATTED_COMMITMSG" # construct commit message and commit
+    verbose_echo "Running git commit with arguments: $GIT_COMMIT_ARGS -m\"$LOCAL_FORMATTED_COMMITMSG\""
+
+    if [ -n "$PULL_CMD" ]; then
+      echo "Pull command is $PULL_CMD"
+      verbose_echo "Executing pull command: $PULL_CMD"
+      eval "$PULL_CMD"
+    fi
+
+    if [ -n "$PUSH_CMD" ]; then
+      echo "Push command is $PUSH_CMD"
+      verbose_echo "Executing push command: $PUSH_CMD"
+      eval "$PUSH_CMD"
+    fi
+  else
+    verbose_echo "No tracked changes detected."
+  fi
+}
+
 ###############################################################################
+
+# If -f is specified, perform an initial commit before starting to watch
+if [ "$COMMIT_ON_START" -eq 1 ]; then
+  verbose_echo "Performing initial commit check..."
+  perform_commit
+fi
 
 # main program loop: wait for changes and commit them
 #   whenever inotifywait reports a change, we spawn a timer (sleep process) that gives the writing
@@ -390,78 +473,7 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   # start timeout process
   (
     sleep "$SLEEP_TIME" # wait some more seconds to give apps time to write out all changes
-
-    if [ -n "$DATE_FMT" ]; then
-      #FORMATTED_COMMITMSG="$(sed "s/%d/$(date "$DATE_FMT")/" <<< "$COMMITMSG")" # splice the formatted date-time into the commit message
-      FORMATTED_COMMITMSG="${COMMITMSG/\%d/$(date "$DATE_FMT")}" # splice the formatted date-time into the commit message
-    fi
-
-    if [[ $LISTCHANGES -ge 0 ]]; then # allow listing diffs in the commit log message, unless if there are too many lines changed
-      DIFF_COMMITMSG="$($GIT diff -U0 "$LISTCHANGES_COLOR" | diff-lines)"
-      LENGTH_DIFF_COMMITMSG=0
-      if [[ $LISTCHANGES -ge 1 ]]; then
-        LENGTH_DIFF_COMMITMSG=$(echo -n "$DIFF_COMMITMSG" | grep -c '^')
-      fi
-      if [[ $LENGTH_DIFF_COMMITMSG -le $LISTCHANGES ]]; then
-        # Use git diff as the commit msg, unless if files were added or deleted but not modified
-        if [ -n "$DIFF_COMMITMSG" ]; then
-          FORMATTED_COMMITMSG="$DIFF_COMMITMSG"
-        else
-          FORMATTED_COMMITMSG="New files added: $($GIT status -s)"
-        fi
-      else
-        #FORMATTED_COMMITMSG="Many lines were modified. $FORMATTED_COMMITMSG"
-        FORMATTED_COMMITMSG=$($GIT diff --stat | grep '|')
-      fi
-    fi
-
-    if [ -n "$COMMITCMD" ]; then
-      if [ "$PASSDIFFS" -eq 1 ]; then
-        # If -C is set, pass the list of diffed files to the commit command
-        # Unsure whether or not I should check if the command fails
-        FORMATTED_COMMITMSG="$($COMMITCMD < <($GIT diff --name-only))"
-      else
-        FORMATTED_COMMITMSG="$($COMMITCMD)"
-      fi
-    fi
-
-    # CD into right dir
-    cd "$TARGETDIR" || {
-      stderr "Error: Can't change directory to '${TARGETDIR}'."
-      exit 6
-    }
-    STATUS=$($GIT status -s)
-    if [ -n "$STATUS" ]; then # only commit if status shows tracked changes.
-      verbose_echo "Tracked changes detected."
-      # We want GIT_ADD_ARGS and GIT_COMMIT_ARGS to be word split
-      # shellcheck disable=SC2086
-
-      if [ "$SKIP_IF_MERGING" -eq 1 ] && is_merging; then
-        verbose_echo "Skipping commit - repo is merging"
-        exit 0
-      fi
-
-      # shellcheck disable=SC2086
-      $GIT add $GIT_ADD_ARGS # add file(s) to index
-      verbose_echo "Running git add with arguments: $GIT_ADD_ARGS"
-      # shellcheck disable=SC2086
-      $GIT commit $GIT_COMMIT_ARGS -m"$FORMATTED_COMMITMSG" # construct commit message and commit
-      verbose_echo "Running git commit with arguments: $GIT_COMMIT_ARGS -m\"$FORMATTED_COMMITMSG\""
-
-      if [ -n "$PULL_CMD" ]; then
-        echo "Pull command is $PULL_CMD"
-        verbose_echo "Executing pull command: $PULL_CMD"
-        eval "$PULL_CMD"
-      fi
-
-      if [ -n "$PUSH_CMD" ]; then
-        echo "Push command is $PUSH_CMD"
-        verbose_echo "Executing push command: $PUSH_CMD"
-        eval "$PUSH_CMD"
-      fi
-    else
-      verbose_echo "No tracked changes detected."
-    fi
+    perform_commit
   ) & # and send into background
 
   SLEEP_PID=$! # and remember its PID
