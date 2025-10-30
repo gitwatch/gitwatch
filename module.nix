@@ -38,9 +38,9 @@ in
 {
   options.services.gitwatch = lib.mkOption {
     description = ''
-      A set of git repositories to watch for.
- See
-      [gitwatch](https://github.com/gitwatch/gitwatch) for more.
+           A set of git repositories to watch for.
+      See
+           [gitwatch](https://github.com/gitwatch/gitwatch) for more.
     '';
     default = { };
     example = {
