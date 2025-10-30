@@ -12,44 +12,42 @@ load startup-shutdown
 
 function notify_ignore { #@test
 
-    # Start up gitwatch and capture its output
-    ${BATS_TEST_DIRNAME}/../gitwatch.sh -x test_subdir "$testdir/local/remote" > "$testdir/output.txt" 3>&- &
-    GITWATCH_PID=$!
+  # Start up gitwatch and capture its output
+  ${BATS_TEST_DIRNAME}/../gitwatch.sh -x test_subdir "$testdir/local/remote" > "$testdir/output.txt" 3>&- &
+  GITWATCH_PID=$!
 
-    # Keeps kill message from printing to screen
-    disown
+  # Keeps kill message from printing to screen
+  disown
 
-    # Create a file, verify that it hasn't been added yet, then commit
-    cd remote
-    mkdir test_subdir
+  # Create a file, verify that it hasn't been added yet, then commit
+  cd remote
+  mkdir test_subdir
 
-    # According to inotify documentation, a race condition results if you write
-    # to directory too soon after it has been created; hence, a short wait.
-    sleep 1
-    echo "line1" >> file1.txt
+  # According to inotify documentation, a race condition results if you write
+  # to directory too soon after it has been created; hence, a short wait.
+  sleep 1
+  echo "line1" >> file1.txt
 
-    # Wait a bit for inotify to figure out the file has changed, and do its add,
-    # and commit
-    sleep $WAITTIME
+  # Wait a bit for inotify to figure out the file has changed, and do its add,
+  # and commit
+  sleep $WAITTIME
 
-    # Add second file that we plan to ignore
-    cd test_subdir
-    echo "line2" >> file2.txt
+  # Add second file that we plan to ignore
+  cd test_subdir
+  echo "line2" >> file2.txt
 
-    # Wait a bit for inotify to figure out the file has changed, and do its add,
-    # and commit
-    sleep $WAITTIME
+  # Wait a bit for inotify to figure out the file has changed, and do its add,
+  # and commit
+  sleep $WAITTIME
 
-    cat "$testdir/output.txt"
-    run git log --name-status --oneline
-    echo $output
+  cat "$testdir/output.txt"
+  run git log --name-status --oneline
+  echo $output
 
-    # Look for files in log: file1 should be there, file2 should not be
-    run grep "file1.txt" $testdir/output.txt
-    [ $status -eq 0 ]
+  # Look for files in log: file1 should be there, file2 should not be
+  run grep "file1.txt" $testdir/output.txt
+  [ $status -eq 0 ]
 
-    run grep "file2.txt" $testdir/output.txt
-    [ $status -ne 0 ]
+  run grep "file2.txt" $testdir/output.txt
+  [ $status -ne 0 ]
 }
-
-
