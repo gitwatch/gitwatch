@@ -1,8 +1,14 @@
 {
   description = "A bash script to watch a file or folder and commit changes to a git repo";
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
     let
-      packages = flake-utils.lib.eachDefaultSystem (system:
+      packages = flake-utils.lib.eachDefaultSystem (
+        system:
         let
           pkgs = import nixpkgs {
             inherit system;
@@ -13,7 +19,8 @@
             gitwatch = pkgs.callPackage ./gitwatch.nix { };
             default = gitwatch;
           };
-        });
+        }
+      );
     in
     packages // { modules = [ ./module.nix ]; };
 }
