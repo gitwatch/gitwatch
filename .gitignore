@@ -1,3 +1,5 @@
+#Directories
+node_modules/
 #Archives
 *.gz
 *.tar
