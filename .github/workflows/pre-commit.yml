@@ -3,6 +3,8 @@ name: pre-commit
 on:
   pull_request:
   push:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
