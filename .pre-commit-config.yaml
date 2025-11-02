@@ -18,7 +18,8 @@ repos:
         args: [--wrap, "75", --number]
         additional_dependencies:
           - mdformat-toc
-          - mdformat-beautysh
+          # Replaced mdformat-beautysh with your fork for testing:
+          - mdformat-beautysh@git+https://github.com/meek2100/mdformat-beautysh.git@mdformat-beautysh-new-api
           - mdformat-config
           - mdformat-gfm
           - setuptools
