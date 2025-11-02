@@ -18,7 +18,7 @@ repos:
         args: [--wrap, "75", --number]
         additional_dependencies:
           - mdformat-toc
-          - mdformat-beautysh
+          - git+https://github.com/meek2100/mdformat-beautysh.git@mdformat-beautysh-new-api
           - mdformat-config
           - mdformat-gfm
           - setuptools
