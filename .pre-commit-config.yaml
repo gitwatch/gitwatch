@@ -18,8 +18,7 @@ repos:
         args: [--wrap, "75", --number]
         additional_dependencies:
           - mdformat-toc
-          # This is the correct syntax for pre-commit to use your branch:
-          - git: https://github.com/meek2100/mdformat-beautysh.git@mdformat-beautysh-new-api
+          - mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
           - setuptools
