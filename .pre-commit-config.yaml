@@ -22,9 +22,6 @@ repos:
           - mdformat-config
           - mdformat-gfm
           - setuptools
-          # Pin beautysh==6.2.1. Required by mdformat-beautysh, as
-          # v6.3.0+ removes the 'Beautify' class and causes an ImportError.
-          - beautysh==6.2.1
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
