@@ -18,10 +18,9 @@ repos:
         args: [--wrap, "75", --number]
         additional_dependencies:
           - mdformat-toc
-          - git+https://github.com/meek2100/mdformat-beautysh.git@new-api
+          - git+https://github.com/hukkin/mdformat-beautysh
           - mdformat-config
           - mdformat-gfm
-          - setuptools
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
