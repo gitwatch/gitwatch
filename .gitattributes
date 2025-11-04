@@ -1,0 +1,46 @@
+# -----------------------------------------------------------------
+# gitwatch .gitattributes
+# -----------------------------------------------------------------
+#
+# See: https://git-scm.com/docs/gitattributes
+
+# Set the default behavior for all files.
+# - text=auto: Git will auto-detect if a file is text or binary.
+# - eol=lf:    Force all text files to use Unix-style (LF) line endings
+#              on checkout. This is CRITICAL for shell scripts.
+* text=auto eol=lf
+
+# --- Shell Scripts (Must be LF) ---
+# Explicitly enforce LF for all shell scripts, as CRLF will break them.
+# Also, correctly identify .bats files as Shell for GitHub's linguist.
+gitwatch.sh       linguist-language=Shell
+entrypoint.sh     linguist-language=Shell
+*.sh              linguist-language=Shell
+*.bash            linguist-language=Shell
+*.bats            linguist-language=Shell
+
+# --- Windows Scripts (Must be CRLF) ---
+# Override the 'eol=lf' default and enforce CRLF for Windows-native
+# scripts, as cmd.exe requires them.
+*.bat             eol=crlf linguist-language=Batchfile
+*.ps1             eol=crlf linguist-language=PowerShell
+
+# --- Build & Config Files ---
+# Identify specific file types for better language statistics and diffs.
+Makefile          linguist-language=Makefile
+Dockerfile        linguist-language=Dockerfile
+*.nix             linguist-language=Nix
+
+# --- Generated Files ---
+# Mark generated lock files to hide them from diffs by default on GitHub.
+flake.lock        linguist-generated=true
+
+# --- Documentation / Text ---
+# These are already covered by the '*' rule, but are here for clarity.
+*.md
+*.txt
+*.yaml
+*.json
+.editorconfig
+.gitignore
+.shellcheckrc

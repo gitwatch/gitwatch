@@ -1,11 +1,77 @@
-#Directories
+# ===================================================================
+# IDE & Editor Configuration
+#
+# Ignore user-specific settings, but force-include
+# tracked workspace recommendations.
+# ===================================================================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+
+# ===================================================================
+# Dependencies
+# ===================================================================
 node_modules/
-#Archives
+tests/bats-assert
+tests/bats-file
+tests/bats-support
+
+# ===================================================================
+# Build & Packaging Artifacts
+# ===================================================================
+# Nix build results
+result
+result-*
+
+# Archives
 *.gz
 *.tar
 *.zip
-#Backup files
-.*.swp
-*.bk
-*.bak
+
+
+# ===================================================================
+# Testing & Local Artifacts
+# ===================================================================
+# General logs and temporary files
+*.log
+*.tmp
+
+# BATS test artifacts (e.g., mktemp output.XXXXX)
+*.XXXXX
+
+# Docker-compose test volume
+watched-repo/
+
+# Folders excluded from pre-commit, likely for demo/debug
+demo/
+debug/
+
+
+# ===================================================================
+# Caches
+# ===================================================================
+.pre-commit-cache/
+
+
+# ===================================================================
+# OS & Editor Backups
+# ===================================================================
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Vim/Editor backups
 *~
+.*.swp
+*.bak
+*.bk
+
+
+# ===================================================================
+# Local Environment
+# ===================================================================
+# Docker environment variables (often contain secrets)
+.env
