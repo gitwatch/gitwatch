@@ -6,9 +6,12 @@ services:
     image: ghcr.io/gitwatch/gitwatch:latest
     restart: always
     volumes:
-      # The local directory on your machine that you want to watch
+      # The local directory on your machine that you want to watch (see GIT_WATCH_DIR in the 'environment' section below)
       # IMPORTANT: You must create this directory first (e.g., ./my-notes-repo)
       - ./watched-repo:/app/watched-repo
+
+      # Optional: Use a separate Git directory (see GIT_DIR in the 'environment' section below)
+      # - ~/.git:/app/.git
 
       # Mount your SSH key for pushing to remote repositories
       - ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro
@@ -17,8 +20,12 @@ services:
       - ~/.gitconfig:/root/.gitconfig:ro
     environment:
       # --- Watched Directory ---
-      # This should match the container path in the 'volumes' section above
+      # This should match the watch path in the container from the 'volumes' section above
       GIT_WATCH_DIR: /app/watched-repo
+
+      # --- Git Directory (optional) ---
+      # If set, this should match the .git dir path in the container from the 'volumes' section above
+      # GIT_DIR: /app/.git
 
       # --- Git Remote Configuration ---
       # The remote repository to push to (e.g., 'origin')
