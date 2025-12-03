@@ -7,6 +7,7 @@ set -e
 
 # Target directory to watch
 GIT_WATCH_DIR=${GIT_WATCH_DIR:-/app/watched-repo}
+GIT_DIR="${GIT_DIR:-}"
 
 # Git options
 GIT_REMOTE=${GIT_REMOTE:-origin}
@@ -37,6 +38,10 @@ cmd+=( -b "${GIT_BRANCH}" )
 cmd+=( -s "${SLEEP_TIME}" )
 cmd+=( -m "${COMMIT_MSG}" )
 cmd+=( -d "${DATE_FMT}" )
+
+if [ -n "${GIT_DIR}" ]; then
+  cmd+=( -g "${GIT_DIR}" )
+fi
 
 # --- Convert User-Friendly Exclude Pattern to Regex ---
 if [ -n "${USER_EXCLUDE_PATTERN}" ]; then
