@@ -1,7 +1,15 @@
 ---
 name: Docker Build and Publish
-# Allows you to run this workflow manually from the Actions tab
-on: workflow_dispatch
+
+on:
+  push:
+    tags:
+      - "v*"
+    branches:
+      - master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -19,12 +27,30 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Generate Docker metadata
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # Always add sha tags
+            type=sha,format=long,prefix=
+            type=sha,format=short,prefix=
+
+            # Moving master branch tag (only on master pushes)
+            type=ref,event=branch,enable=${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }},prefix=,suffix=,pattern=master
+
+            # Tag release versions + latest only when a vX.Y tag is present (push tag or manual run)
+            type=ref,event=tag,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=match,pattern=v(.*),group=1,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+          flavor: |
+            latest=false
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
