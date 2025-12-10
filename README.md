@@ -145,7 +145,27 @@ The easiest way to run `gitwatch` with Docker is by using the provided
 - **SSH Key**: For pushing to a remote repository, the container needs
   access to an SSH key that is authorized with your Git provider.
 
-**2. Configuration:**
+**2. Docker Image Tags:**
+
+This project publishes multiple Docker tags so you can choose the one that
+best fits your use case.
+
+The following image tags are available:
+
+- `:<full-sha>`, `:<short-sha>`\
+  Always published for every build (immutable).
+
+- `:master`\
+  Moving tag for the latest image from `master` branch.
+
+- `:vX.Y`, `:X.Y`\
+  Published when a release tag `vX.Y` is pushed.
+
+- `:latest`\
+  Updated when a `vX.Y` tag is pushed, pointing to the newest release
+  image.
+
+**3. Configuration:**
 
 The `docker-compose.yml` file is configured using environment variables.
 You can either edit the `environment` section directly in the file or
@@ -165,8 +185,10 @@ Here's a breakdown of the important parts of the `docker-compose.yml` file:
     into the container. This ensures that the commits made by `gitwatch`
     are attributed to you with the correct name and email.
 - **`environment`**: This section controls how `gitwatch` behaves.
-  <!-- prettier-ignore-start -->
-  **3. Environment Variables**
+
+<!-- prettier-ignore-start -->
+
+**4. Environment Variables**
 
 The following environment variables are available for configuring the
 `gitwatch` container:
@@ -188,7 +210,7 @@ The following environment variables are available for configuring the
 
 <!-- prettier-ignore-end -->
 
-**4. Running gitwatch:**
+**5. Running gitwatch:**
 
 - **Start the container** in the background (detached mode):
 
