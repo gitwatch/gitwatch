@@ -464,7 +464,7 @@ fi
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   # In some distributed version of inotifywait, the exclude pattern is not properly enforced. This
   #   leads to multiple commits invoked per change and failing to push to remote. (pull #156)
-  if [[ $line =~ (^|.*/)\.git(/|$) ]]; then
+  if [[ "$line" =~ (^|.*/)\.git(/|$) ]]; then
     continue
   fi
 
