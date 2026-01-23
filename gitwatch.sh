@@ -468,7 +468,7 @@ eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
   #   how the exclude pattern works on paper, and when added as a systemd service, it then completely
   #   disregarded the excludes. As this awful time sink would be difficult to fully diagnose, and
   #   for the sake of ensuring gitwatch works out of the box, this simple check handles the case
-  #   where this causes more than oen commit and fails to push as consequence. Pull #156, Issue: #115
+  #   where this causes more than one commit and fails to push as consequence. Pull #156, Issue: #115
   if [[ $line =~ (^|.*/)\.git(/|$) ]]; then
     continue
   fi
