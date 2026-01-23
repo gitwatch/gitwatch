@@ -462,13 +462,8 @@ fi
 # Would be great to fix the ignored issue below; ignoring it for now.
 # shellcheck disable=SC2294
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
-  # The below check may seem redundant, but its purpose is to relieve an obscure issue from some
-  #   distributed version of inotifywait failing to enforce exclude patterns. An initial temporary
-  #   rememdy was to supply -x '.git/objects/' manually, but that shouldn't have been needed with
-  #   how the exclude pattern works on paper, and when added as a systemd service, it then completely
-  #   disregarded the excludes. As this awful time sink would be difficult to fully diagnose, and
-  #   for the sake of ensuring gitwatch works out of the box, this simple check handles the case
-  #   where this causes more than one commit and fails to push as consequence. Pull #156, Issue: #115
+  # In some distributed version of inotifywait, the exclude pattern is not properly enforced. This
+  #   leads to multiple commits invoked per change and failing to push to remote. (pull #156)
   if [[ $line =~ (^|.*/)\.git(/|$) ]]; then
     continue
   fi
