@@ -462,6 +462,10 @@ fi
 # Would be great to fix the ignored issue below; ignoring it for now.
 # shellcheck disable=SC2294
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
+  if [[ $line =~ (.*/\.git|^\.git)(/|$) ]]; then
+    continue # edge cases
+  fi
+  
   verbose_echo "Change detected: $line"
   # is there already a timeout process running?
   if [[ -n $SLEEP_PID ]] && kill -0 "$SLEEP_PID" &> /dev/null; then
