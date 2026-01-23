@@ -462,7 +462,7 @@ fi
 # Would be great to fix the ignored issue below; ignoring it for now.
 # shellcheck disable=SC2294
 eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
-  if [[ $line =~ (.*/\.git|^\.git)(/|$) ]]; then
+  if [[ $line =~ (^|.*)\.git(/|$) ]]; then
     continue # edge cases
   fi
   
