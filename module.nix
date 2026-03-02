@@ -10,9 +10,11 @@ let
     name: cfg:
     lib.nameValuePair "gitwatch-${name}" (
       let
-        getvar = flag: var: if cfg."${var}" != null then "${flag} ${cfg."${var}"}" else "";
+        getvar = flag: var: if cfg."${var}" != null then "${flag} \"${cfg."${var}"}\"" else "";
         branch = getvar "-b" "branch";
         fetcher = if cfg.remote == null then "true" else '''';
+        remote = getvar "-r" "remote";
+        message = getvar "-m" "message";
       in
       {
         inherit (cfg) enable;
@@ -29,7 +31,7 @@ let
             git clone ${branch} "${cfg.remote}" "${cfg.path}"
           fi
           ${fetcher}
-          gitwatch ${getvar "-r" "remote"} ${getvar "-m" "message"} ${branch} ${cfg.path}
+          gitwatch ${remote} ${message} ${branch} "${cfg.path}"
         '';
         serviceConfig.User = cfg.user;
       }
