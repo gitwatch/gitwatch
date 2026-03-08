@@ -254,21 +254,18 @@ if [ -d "$1" ]; then # if the target is a directory
 
   TARGETDIR=$(sed -e "s/\/*$//" <<< "$IN") # dir to CD into before using git commands: trim trailing slash, if any
 
-  # shellcheck disable=SC2086
-  if [ -z $EXCLUDE_PATTERN ]; then
-    EXCLUDE_OPTS="'(\.git/|\.git$)'"
+  if [ -z "$EXCLUDE_PATTERN" ]; then
+    EXCLUDE_OPTS="(\.git/|\.git$)"
   else
-    EXCLUDE_OPTS="'(\.git/|\.git$|$EXCLUDE_PATTERN)'"
+    EXCLUDE_OPTS="(\.git/|\.git$|${EXCLUDE_PATTERN})"
   fi
 
   # construct inotifywait-commandline
   if [ "$(uname)" != "Darwin" ]; then
-    # shellcheck disable=SC2206
-    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
+    INW_ARGS=("-qmr" "-e" "$EVENTS" "--exclude" "$EXCLUDE_OPTS" "$TARGETDIR")
   else
     # still need to fix EVENTS since it wants them listed one-by-one
-    # shellcheck disable=SC2206
-    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" $EXCLUDE_OPTS "$(printf "%q" "$TARGETDIR")")
+    INW_ARGS=("--recursive" "$EVENTS" "-E" "--exclude" "$EXCLUDE_OPTS" "$TARGETDIR")
   fi
   GIT_ADD_ARGS="--all ." # add "." (CWD) recursively to index
   GIT_COMMIT_ARGS=""     # add -a switch to "commit" call just to be sure
@@ -459,9 +456,8 @@ fi
 #   process some time (in case there are a lot of changes or w/e); if there is already a timer
 #   running when we receive an event, we kill it and start a new one; thus we only commit if there
 #   have been no changes reported during a whole timeout period
-# Would be great to fix the ignored issue below; ignoring it for now.
-# shellcheck disable=SC2294
-eval "$INW" "${INW_ARGS[@]}" | while read -r line; do
+# shellcheck disable=SC2086
+$INW "${INW_ARGS[@]}" | while read -r line; do
   # In some distributed version of inotifywait, the exclude pattern is not properly enforced. This
   #   leads to multiple commits invoked per change and failing to push to remote. (pull #156)
   if [[ "$line" =~ (^|.*/)\.git(/|$) ]]; then
