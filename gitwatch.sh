@@ -315,31 +315,31 @@ cd "$TARGETDIR" || {
   exit 5
 }
 
+PUSH_ARGS=()
+PULL_ARGS=()
+
 if [ -n "$REMOTE" ]; then        # are we pushing to a remote?
   verbose_echo "Push remote selected: $REMOTE"
   if [ -z "$BRANCH" ]; then      # Do we have a branch set to push to ?
     verbose_echo "No push branch selected, using default."
-    PUSH_CMD="$GIT push $REMOTE" # Branch not set, push to remote without a branch
+    PUSH_ARGS=(push "$REMOTE")   # Branch not set, push to remote without a branch
   else
     # check if we are on a detached HEAD
     if HEADREF=$($GIT symbolic-ref HEAD 2> /dev/null); then # HEAD is not detached
       verbose_echo "Push branch selected: $BRANCH, current branch: ${HEADREF#refs/heads/}"
-      #PUSH_CMD="$GIT push $REMOTE $(sed "s_^refs/heads/__" <<< "$HEADREF"):$BRANCH"
-      PUSH_CMD="$GIT push $REMOTE ${HEADREF#refs/heads/}:$BRANCH"
+      PUSH_ARGS=(push "$REMOTE" "${HEADREF#refs/heads/}:$BRANCH")
     else # HEAD is detached
       verbose_echo "Push branch selected: $BRANCH, HEAD is detached."
-      PUSH_CMD="$GIT push $REMOTE $BRANCH"
+      PUSH_ARGS=(push "$REMOTE" "$BRANCH")
     fi
   fi
   if [[ $PULL_BEFORE_PUSH -eq 1 ]]; then
     verbose_echo "Pull before push is enabled."
-    PULL_CMD="$GIT pull --rebase $REMOTE" # Branch not set, pull to remote without a branch
+    PULL_ARGS=(pull "--rebase" "$REMOTE")
   fi
 
 else
   verbose_echo "No push remote selected."
-  PUSH_CMD="" # if not remote is selected, make sure push command is empty
-  PULL_CMD="" # if not remote is selected, make sure pull command is empty
 fi
 
 # A function to reduce git diff output to the actual changed content, and insert file line numbers.
@@ -430,16 +430,18 @@ perform_commit() {
     $GIT commit $GIT_COMMIT_ARGS -m"$LOCAL_FORMATTED_COMMITMSG" # construct commit message and commit
     verbose_echo "Running git commit with arguments: $GIT_COMMIT_ARGS -m\"$LOCAL_FORMATTED_COMMITMSG\""
 
-    if [ -n "$PULL_CMD" ]; then
-      echo "Pull command is $PULL_CMD"
-      verbose_echo "Executing pull command: $PULL_CMD"
-      eval "$PULL_CMD"
+    if [ "${#PULL_ARGS[@]}" -gt 0 ]; then
+      echo "Pull command: $GIT ${PULL_ARGS[*]}"
+      verbose_echo "Executing pull: $GIT ${PULL_ARGS[*]}"
+      # shellcheck disable=SC2086
+      $GIT "${PULL_ARGS[@]}"
     fi
 
-    if [ -n "$PUSH_CMD" ]; then
-      echo "Push command is $PUSH_CMD"
-      verbose_echo "Executing push command: $PUSH_CMD"
-      eval "$PUSH_CMD"
+    if [ "${#PUSH_ARGS[@]}" -gt 0 ]; then
+      echo "Push command: $GIT ${PUSH_ARGS[*]}"
+      verbose_echo "Executing push: $GIT ${PUSH_ARGS[*]}"
+      # shellcheck disable=SC2086
+      $GIT "${PUSH_ARGS[@]}"
     fi
   else
     verbose_echo "No tracked changes detected."
