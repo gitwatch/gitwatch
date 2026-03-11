@@ -433,12 +433,14 @@ perform_commit() {
     if [ "${#PULL_ARGS[@]}" -gt 0 ]; then
       echo "Pull command: $GIT ${PULL_ARGS[*]}"
       verbose_echo "Executing pull: $GIT ${PULL_ARGS[*]}"
+      # shellcheck disable=SC2086 # $GIT is intentionally unquoted for word-splitting
       $GIT "${PULL_ARGS[@]}"
     fi
 
     if [ "${#PUSH_ARGS[@]}" -gt 0 ]; then
       echo "Push command: $GIT ${PUSH_ARGS[*]}"
       verbose_echo "Executing push: $GIT ${PUSH_ARGS[*]}"
+      # shellcheck disable=SC2086 # $GIT is intentionally unquoted for word-splitting
       $GIT "${PUSH_ARGS[@]}"
     fi
   else
