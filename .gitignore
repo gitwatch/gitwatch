@@ -75,3 +75,6 @@ Thumbs.db
 # ===================================================================
 # Docker environment variables (often contain secrets)
 .env
+
+# Local Docker Compose overrides for machine-specific customization
+docker-compose.override.yml

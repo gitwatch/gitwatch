@@ -167,28 +167,33 @@ The following image tags are available:
 
 **3. Configuration:**
 
-The `docker-compose.yml` file is configured using environment variables.
-You can either edit the `environment` section directly in the file or
-create a `.env` file in the same directory to set the values.
+The `docker-compose.yml` file can be customized through a local `.env`
+file for host volume mounts. For more complete customization, you can
+also create a `docker-compose.override.yml` file. This file is ignored by
+Git so you can tailor the setup for your local environment without
+modifying the tracked compose file.
 
 Here's a breakdown of the important parts of the `docker-compose.yml` file:
 
-- **`volumes`**: This is the most critical section to configure.
-  - `./watched-repo:/app/watched-repo`: This maps a directory from your
-    computer (the "host") into the container.
-    - You **must** change `./watched-repo` to the path of the local Git
-      repository you want `gitwatch` to monitor.
-  - `~/.ssh/id_rsa:/root/.ssh/id_rsa:ro`: This securely mounts your SSH
-    private key into the container in read-only mode (`ro`). This is
-    necessary for `gitwatch` to push changes to your remote repository.
-  - `~/.gitconfig:/root/.gitconfig:ro`: This mounts your Git configuration
-    into the container. This ensures that the commits made by `gitwatch`
-    are attributed to you with the correct name and email.
+- **`volumes`**: This section mounts the watched repository and the host
+  Git/SSH configuration into the container. Host-side paths can be
+  customized through a local `.env` file.
 - **`environment`**: This section controls how `gitwatch` behaves.
+
+**4. Host Volume Variables (`.env`)**
+
+The following variables can be set in a local `.env` file to customize
+host volume mounts without editing `docker-compose.yml`:
+
+| Variable                    | Default Value     | Description                                               |
+| :-------------------------- | :---------------- | :-------------------------------------------------------- |
+| `HOST_WATCHED_REPO_PATH`    | `./watched-repo`  | Local path of the Git repository to watch.                |
+| `HOST_SSH_PRIVATE_KEY_PATH` | `~/.ssh/id_rsa`   | SSH private key mounted read-only into the container.     |
+| `HOST_GITCONFIG_PATH`       | `~/.gitconfig`    | Git config mounted read-only into the container.          |
 
 <!-- prettier-ignore-start -->
 
-**4. Environment Variables**
+**5. Environment Variables**
 
 The following environment variables are available for configuring the
 `gitwatch` container:
@@ -210,7 +215,7 @@ The following environment variables are available for configuring the
 
 <!-- prettier-ignore-end -->
 
-**5. Running gitwatch:**
+**6. Running gitwatch:**
 
 - **Start the container** in the background (detached mode):
 
