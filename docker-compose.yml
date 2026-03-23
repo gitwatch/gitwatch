@@ -8,16 +8,16 @@ services:
     volumes:
       # The local directory on your machine that you want to watch (see GIT_WATCH_DIR in the 'environment' section below)
       # IMPORTANT: You must create this directory first (e.g., ./my-notes-repo)
-      - ./watched-repo:/app/watched-repo
+      - ${HOST_WATCHED_REPO_PATH:-./watched-repo}:/app/watched-repo
 
       # Optional: Use a separate Git directory (see GIT_DIR in the 'environment' section below)
       # - ~/.git:/app/.git
 
       # Mount your SSH key for pushing to remote repositories
-      - ~/.ssh/id_rsa:/root/.ssh/id_rsa:ro
+      - ${HOST_SSH_PRIVATE_KEY_PATH:-~/.ssh/id_rsa}:/root/.ssh/id_rsa:ro
 
       # Mount your git config to use your correct user name and email for commits
-      - ~/.gitconfig:/root/.gitconfig:ro
+      - ${HOST_GITCONFIG_PATH:-~/.gitconfig}:/root/.gitconfig:ro
     environment:
       # --- Watched Directory ---
       # This should match the watch path in the container from the 'volumes' section above
