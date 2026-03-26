@@ -167,11 +167,11 @@ The following image tags are available:
 
 **3. Configuration:**
 
-The `docker-compose.yml` file can be customized through a local `.env`
-file for host volume mounts. For more complete customization, you can
-also create a `docker-compose.override.yml` file. This file is ignored by
-Git so you can tailor the setup for your local environment without
-modifying the tracked compose file.
+The `docker-compose.yml` file can be customized through a local `.env` file
+for host volume mounts. For more complete customization, you can also
+create a `docker-compose.override.yml` file. This file is ignored by Git so
+you can tailor the setup for your local environment without modifying the
+tracked compose file.
 
 Here's a breakdown of the important parts of the `docker-compose.yml` file:
 
@@ -182,14 +182,14 @@ Here's a breakdown of the important parts of the `docker-compose.yml` file:
 
 **4. Host Volume Variables (`.env`)**
 
-The following variables can be set in a local `.env` file to customize
-host volume mounts without editing `docker-compose.yml`:
+The following variables can be set in a local `.env` file to customize host
+volume mounts without editing `docker-compose.yml`:
 
-| Variable                    | Default Value     | Description                                               |
-| :-------------------------- | :---------------- | :-------------------------------------------------------- |
-| `HOST_WATCHED_REPO_PATH`    | `./watched-repo`  | Local path of the Git repository to watch.                |
-| `HOST_SSH_PRIVATE_KEY_PATH` | `~/.ssh/id_rsa`   | SSH private key mounted read-only into the container.     |
-| `HOST_GITCONFIG_PATH`       | `~/.gitconfig`    | Git config mounted read-only into the container.          |
+| Variable                    | Default Value    | Description                                           |
+| :-------------------------- | :--------------- | :---------------------------------------------------- |
+| `HOST_WATCHED_REPO_PATH`    | `./watched-repo` | Local path of the Git repository to watch.            |
+| `HOST_SSH_PRIVATE_KEY_PATH` | `~/.ssh/id_rsa`  | SSH private key mounted read-only into the container. |
+| `HOST_GITCONFIG_PATH`       | `~/.gitconfig`   | Git config mounted read-only into the container.      |
 
 <!-- prettier-ignore-start -->
 
