@@ -115,11 +115,11 @@ shelp() {
   echo "config and restarting it afterwards."
   echo ""
   echo 'By default, gitwatch tries to use the binaries "git", "inotifywait", and'
-  echo "\"readline\", expecting to find them in the PATH (it uses 'which' to check this"
+  echo "\"readlink\", expecting to find them in the PATH (it uses 'which' to check this"
   echo "and will abort with an error if they cannot be found). If you want to use"
   echo "binaries that are named differently and/or located outside of your PATH, you can"
   echo "define replacements in the environment variables GW_GIT_BIN, GW_INW_BIN, and"
-  echo "GW_RL_BIN for git, inotifywait, and readline, respectively."
+  echo "GW_RL_BIN for git, inotifywait, and readlink, respectively."
 }
 
 # print all arguments to stderr
